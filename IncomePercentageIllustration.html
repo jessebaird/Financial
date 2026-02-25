@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Illinois Financial Margin Visualizer (2026)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (Pinned Versions) -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Prop Types (Required dependency for Recharts UMD) -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    
+    <!-- Recharts (Pinned Stable Version) -->
+    <script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { background-color: #f1f5f9; }
+        /* Custom range slider styling for nicer UI */
+        input[type=range] {
+            height: 10px; /* Slightly taller for visibility */
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px; /* Larger thumb */
+            width: 24px;
+            border-radius: 50%;
+            margin-top: -8px;
+            background: currentColor;
+            cursor: pointer;
+        }
+        /* Scare Aesthetic Pattern - Dark Red & Black Stripes to match chart */
+        .hazard-card {
+            background-color: #7f1d1d; /* Red-900 */
+            background-image: repeating-linear-gradient(
+                45deg,
+                #7f1d1d,
+                #7f1d1d 10px,
+                #280505 10px, /* Very dark red/black */
+                #280505 20px
+            );
+            border: 2px solid #000; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        // Ensure Recharts is loaded before destructuring
+        const { 
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+            ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine 
+        } = window.Recharts;
+
+        // Simple Icon Components to replace Lucide-React imports
+        const Icons = {
+            User: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Users: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            Landmark: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>,
+            Home: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+            ShoppingCart: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+            TrendingDown: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>,
+            AlertCircle: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+            Info: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
+            Sliders: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>,
+            CreditCard: ({className}) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+        };
+
+        const FinancialMargin = () => {
+            const [grossIncome, setGrossIncome] = useState(115000); 
+            const [filingStatus, setFilingStatus] = useState('joint'); 
+            
+            const [showDiscretionary, setShowDiscretionary] = useState(false);
+            const [allocations, setAllocations] = useState({
+                giving: 10,
+                shortTerm: 5,
+                longTerm: 20
+            });
+
+            const [showDebt, setShowDebt] = useState(false);
+            const [debtAllocation, setDebtAllocation] = useState(5);
+
+            const [breakdown, setBreakdown] = useState(null);
+
+            const TAX_DATA = {
+                single: {
+                    standardDeduction: 15500, 
+                    brackets: [
+                        { rate: 0.10, min: 0, max: 12300 },
+                        { rate: 0.12, min: 12300, max: 49800 },
+                        { rate: 0.22, min: 49800, max: 106200 },
+                        { rate: 0.24, min: 106200, max: 202800 },
+                        { rate: 0.32, min: 202800, max: 257500 }
+                    ]
+                },
+                joint: {
+                    standardDeduction: 31000, 
+                    brackets: [
+                        { rate: 0.10, min: 0, max: 24600 },
+                        { rate: 0.12, min: 24600, max: 99600 },
+                        { rate: 0.22, min: 99600, max: 212400 },
+                        { rate: 0.24, min: 212400, max: 405600 },
+                        { rate: 0.32, min: 405600, max: 515000 }
+                    ]
+                }
+            };
+
+            const CONSTANTS = {
+                state_il_rate: 0.0495,        
+                fica_rate: 0.0765,           
+                property_tax_rate: 0.022,    
+                sales_tax_pct_income: 0.02   
+            };
+
+            const EXPENSES_PROFILES = {
+                single: {
+                    health_insurance: 1950,  
+                    utilities: 2150,         
+                    food_groceries: 5100,    
+                    cars_transport: 5600,    
+                    home_maintenance: 2200,  
+                },
+                joint: {
+                    health_insurance: 6800,  
+                    utilities: 3000,         
+                    food_groceries: 8300,    
+                    cars_transport: 10200,   
+                    home_maintenance: 3300,  
+                }
+            };
+
+            useEffect(() => {
+                calculateFinances();
+            }, [grossIncome, filingStatus, showDiscretionary, allocations, showDebt, debtAllocation]);
+
+            const calculateFederalTax = (income, status) => {
+                const data = TAX_DATA[status];
+                const taxableIncome = Math.max(0, income - data.standardDeduction);
+                let tax = 0;
+                let marginalRate = 0;
+
+                for (const bracket of data.brackets) {
+                    if (taxableIncome > bracket.min) {
+                        const taxableAmountInBracket = Math.min(
+                            taxableIncome, 
+                            bracket.max
+                        ) - bracket.min;
+                        
+                        tax += taxableAmountInBracket * bracket.rate;
+                        marginalRate = bracket.rate; 
+                    }
+                }
+                return { tax, marginalRate, effectiveRate: tax / income };
+            };
+
+            const calculateFinances = () => {
+                const expenses = EXPENSES_PROFILES[filingStatus];
+                const fedData = calculateFederalTax(grossIncome, filingStatus);
+                const fedTax = fedData.tax;
+
+                const stateTax = grossIncome * CONSTANTS.state_il_rate;
+                const ficaTax = grossIncome * CONSTANTS.fica_rate;
+                
+                const estHomeValue = grossIncome * 2.5; 
+                const propertyTax = estHomeValue * CONSTANTS.property_tax_rate;
+                const salesTax = grossIncome * CONSTANTS.sales_tax_pct_income;
+
+                const totalTaxes = fedTax + stateTax + ficaTax + propertyTax + salesTax;
+
+                const mortgageRent = (estHomeValue * 0.065) / 12 * 12 * 0.8; 
+                
+                const essentials = 
+                    mortgageRent + 
+                    expenses.health_insurance + 
+                    expenses.utilities + 
+                    expenses.food_groceries + 
+                    expenses.cars_transport + 
+                    expenses.home_maintenance;
+
+                const calcPct = (val) => (val / grossIncome) * 100;
+
+                let chartStack = {};
+                let isDeficit = false;
+                let deficitAmount = 0;
+                let funAmount = 0;
+                let marginAmount = 0;
+
+                const debtAmt = showDebt ? grossIncome * (debtAllocation / 100) : 0;
+                const baseSpent = totalTaxes + essentials + debtAmt;
+                marginAmount = grossIncome - baseSpent;
+
+                const givingAmt = grossIncome * (allocations.giving / 100);
+                const shortAmt = grossIncome * (allocations.shortTerm / 100);
+                const longAmt = grossIncome * (allocations.longTerm / 100);
+
+                let currentStackPct = 0;
+                const getVisiblePct = (rawPct) => {
+                    const available = 100 - currentStackPct;
+                    const used = Math.min(rawPct, Math.max(0, available));
+                    currentStackPct += used;
+                    return used;
+                };
+
+                if (!showDiscretionary) {
+                    isDeficit = marginAmount < 0;
+                    currentStackPct = 0;
+                    
+                    const taxesPct = calcPct(totalTaxes);
+                    const essentialsPct = calcPct(essentials);
+                    const debtStackPct = calcPct(debtAmt);
+                    
+                    chartStack = {
+                        taxes: taxesPct,
+                        essentials: isDeficit ? 100 - taxesPct - debtStackPct : essentialsPct, 
+                        consumerDebt: debtStackPct, 
+                        margin: isDeficit ? 0 : calcPct(marginAmount),
+                        deficit_overflow: isDeficit ? calcPct(Math.abs(marginAmount)) : 0
+                    };
+                    
+                    currentStackPct = 0;
+                    chartStack.taxes = getVisiblePct(taxesPct);
+                    chartStack.essentials = getVisiblePct(essentialsPct);
+                    chartStack.consumerDebt = getVisiblePct(debtStackPct);
+                    
+                    if (currentStackPct < 100) {
+                        chartStack.margin = getVisiblePct(calcPct(marginAmount));
+                        chartStack.deficit_overflow = 0;
+                    } else {
+                        chartStack.margin = 0;
+                        chartStack.deficit_overflow = calcPct(Math.abs(marginAmount));
+                    }
+                    
+                    if (isDeficit) deficitAmount = Math.abs(marginAmount);
+
+                } else {
+                    const totalAllocated = baseSpent + givingAmt + shortAmt + longAmt;
+                    const remaining = grossIncome - totalAllocated;
+                    
+                    isDeficit = remaining < 0;
+                    funAmount = isDeficit ? 0 : remaining;
+                    deficitAmount = isDeficit ? Math.abs(remaining) : 0;
+
+                    currentStackPct = 0;
+
+                    const vTaxes = getVisiblePct(calcPct(totalTaxes));
+                    const vEssentials = getVisiblePct(calcPct(essentials));
+                    const vDebt = getVisiblePct(calcPct(debtAmt));
+                    const vGiving = getVisiblePct(calcPct(givingAmt));
+                    const vShort = getVisiblePct(calcPct(shortAmt));
+                    const vLong = getVisiblePct(calcPct(longAmt));
+                    const vFun = getVisiblePct(calcPct(funAmount));
+                    const vDeficit = calcPct(deficitAmount);
+
+                    chartStack = {
+                        taxes: vTaxes,
+                        essentials: vEssentials,
+                        consumerDebt: vDebt,
+                        giving: vGiving,
+                        shortTerm: vShort,
+                        longTerm: vLong,
+                        fun: vFun,
+                        deficit_overflow: vDeficit 
+                    };
+                }
+
+                const discretionaryLoad = showDiscretionary ? (givingAmt + shortAmt + longAmt) : 0;
+                const totalLoad = totalTaxes + essentials + debtAmt + discretionaryLoad;
+
+                setBreakdown({
+                    isDeficit: isDeficit,
+                    showDiscretionary: showDiscretionary,
+                    showDebt: showDebt,
+                    raw: {
+                        income: grossIncome,
+                        taxes: totalTaxes,
+                        essentials: essentials,
+                        debt: debtAmt,
+                        deficit: deficitAmount,
+                        fun: funAmount,
+                        margin: marginAmount,
+                        giving: givingAmt,
+                        shortTerm: shortAmt,
+                        longTerm: longAmt
+                    },
+                    pct: {
+                        taxes: calcPct(totalTaxes),
+                        essentials: calcPct(essentials),
+                        debt: calcPct(debtAmt),
+                        deficit: calcPct(deficitAmount),
+                        fun: calcPct(funAmount),
+                        margin: calcPct(Math.max(0, marginAmount)),
+                        total_load: calcPct(totalLoad)
+                    },
+                    chart_stack: chartStack,
+                    fed_stats: {
+                        marginal: fedData.marginalRate * 100,
+                        effective: fedData.effectiveRate * 100
+                    },
+                    taxes_breakdown: [
+                        { name: 'Federal Tax', value: calcPct(fedTax), raw: fedTax, color: '#991b1b' },
+                        { name: 'FICA (SS/Med)', value: calcPct(ficaTax), raw: ficaTax, color: '#b91c1c' },
+                        { name: 'IL State Tax', value: calcPct(stateTax), raw: stateTax, color: '#dc2626' },
+                        { name: 'Property Tax', value: calcPct(propertyTax), raw: propertyTax, color: '#ef4444' },
+                        { name: 'Sales/Gas Tax', value: calcPct(salesTax), raw: salesTax, color: '#f87171' },
+                    ],
+                    life_breakdown: [
+                        { name: 'Housing (P&I)', value: calcPct(mortgageRent), raw: mortgageRent, color: '#92400e' },
+                        { name: 'Transport', value: calcPct(expenses.cars_transport), raw: expenses.cars_transport, color: '#b45309' },
+                        { name: 'Groceries', value: calcPct(expenses.food_groceries), raw: expenses.food_groceries, color: '#d97706' },
+                        { name: 'Health Ins.', value: calcPct(expenses.health_insurance), raw: expenses.health_insurance, color: '#f59e0b' },
+                        { name: 'Utils/Maint', value: calcPct(expenses.utilities + expenses.home_maintenance), raw: expenses.utilities + expenses.home_maintenance, color: '#fbbf24' },
+                    ]
+                });
+            };
+
+            const updateAllocation = (key, val) => {
+                setAllocations(prev => ({...prev, [key]: Number(val)}));
+            };
+
+            if (!breakdown) return <div className="p-8 text-center text-slate-500">Loading Financial Model...</div>;
+
+            const currency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+            const pctString = (val) => `${Math.round(val)}%`;
+
+            const stackedData = [
+                {
+                    name: 'Budget',
+                    ...breakdown.chart_stack
+                }
+            ];
+
+            const chartDomainMax = breakdown.pct.total_load > 100 ? Math.ceil(breakdown.pct.total_load * 1.05) : 100;
+
+            return (
+                <div className="p-4 w-full max-w-[98%] mx-auto font-sans">
+                    <div className="mb-4 text-center">
+                        <h1 className="text-5xl font-bold text-slate-800 mb-2">Where Does the Money Go?</h1>
+                        <p className="text-xl text-slate-600">The "Percentage of Life" Breakdown (2026 Projections)</p>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-slate-200">
+                        <div className="flex flex-col gap-6">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="bg-slate-100 p-1 rounded-lg inline-flex relative">
+                                    <button 
+                                        onClick={() => setFilingStatus('single')}
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition-all ${filingStatus === 'single' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <Icons.User /> Single
+                                    </button>
+                                    <button 
+                                        onClick={() => setFilingStatus('joint')}
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition-all ${filingStatus === 'joint' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <Icons.Users /> Married (Joint)
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={() => setShowDebt(!showDebt)}
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-lg text-lg font-bold transition-all border ${showDebt ? 'bg-slate-700 text-white border-slate-800 shadow-md ring-2 ring-slate-200' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                                    >
+                                        <Icons.CreditCard className="w-5 h-5" />
+                                        {showDebt ? "Remove Debt" : "Add Debt Payments"}
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowDiscretionary(!showDiscretionary)}
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-lg text-lg font-bold transition-all border ${showDiscretionary ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-200' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                                    >
+                                        <Icons.Sliders className="w-5 h-5" />
+                                        {showDiscretionary ? "Hide Discretionary" : "Show Discretionary"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-t pt-6 mt-2 border-slate-100">
+                                <div className="w-full md:w-1/2">
+                                    <label className="block text-xl font-semibold text-slate-700 mb-2">
+                                        Annual Gross Income
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        min="30000" 
+                                        max="300000" 
+                                        step="1000"
+                                        value={grossIncome} 
+                                        onChange={(e) => setGrossIncome(Number(e.target.value))}
+                                        className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 text-blue-600"
+                                    />
+                                    <div className="flex justify-between text-base text-slate-400 mt-2">
+                                        <span>$30k</span>
+                                        <span>$150k</span>
+                                        <span>$300k</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-lg text-slate-500 font-medium">Gross Income</div>
+                                    <div className="text-5xl font-bold text-slate-800">{currency(grossIncome)}</div>
+                                    <div className="text-xl text-slate-500 font-mono mt-1">{currency(grossIncome / 12)} / mo</div>
+                                </div>
+                            </div>
+
+                            {(showDiscretionary || showDebt) && (
+                                <div className="mt-2 pt-6 border-t border-slate-200 -mx-6 px-6 pb-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                        {showDebt && (
+                                            <div className="md:col-span-1 border-r border-slate-200 pr-6">
+                                                <div className="flex justify-between mb-2">
+                                                    <label className="text-lg font-bold text-slate-700">Consumer Debt</label>
+                                                    <span className="text-lg font-bold text-slate-800">{debtAllocation}%</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="30" step="1" 
+                                                    value={debtAllocation} onChange={(e) => setDebtAllocation(Number(e.target.value))}
+                                                    className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-slate-600 text-slate-600"
+                                                />
+                                                <p className="text-sm text-slate-500 mt-1">of Gross Income</p>
+                                            </div>
+                                        )}
+
+                                        {showDiscretionary && (
+                                            <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${showDebt ? 'md:col-span-3 pl-0' : 'md:col-span-4'}`}>
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <label className="text-lg font-semibold text-emerald-700 mt-1">Giving</label>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-bold text-emerald-800">{allocations.giving}%</div>
+                                                            <div className="text-sm font-mono text-emerald-600 mt-0.5">
+                                                                {currency(grossIncome * allocations.giving / 100)}/yr
+                                                            </div>
+                                                            <div className="text-sm font-mono text-emerald-600">
+                                                                {currency(grossIncome * allocations.giving / 100 / 12)}/mo
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="0" max="20" step="1" 
+                                                        value={allocations.giving} onChange={(e) => updateAllocation('giving', e.target.value)}
+                                                        className="w-full h-3 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 text-emerald-600"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <label className="text-lg font-semibold text-sky-700 mt-1">Short Term Saving</label>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-bold text-sky-800">{allocations.shortTerm}%</div>
+                                                            <div className="text-sm font-mono text-sky-600 mt-0.5">
+                                                                {currency(grossIncome * allocations.shortTerm / 100)}/yr
+                                                            </div>
+                                                            <div className="text-sm font-mono text-sky-600">
+                                                                {currency(grossIncome * allocations.shortTerm / 100 / 12)}/mo
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="0" max="20" step="1" 
+                                                        value={allocations.shortTerm} onChange={(e) => updateAllocation('shortTerm', e.target.value)}
+                                                        className="w-full h-3 bg-sky-200 rounded-lg appearance-none cursor-pointer accent-sky-600 text-sky-600"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <label className="text-lg font-semibold text-violet-700 mt-1">Long Term Saving</label>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-bold text-violet-800">{allocations.longTerm}%</div>
+                                                            <div className="text-sm font-mono text-violet-600 mt-0.5">
+                                                                {currency(grossIncome * allocations.longTerm / 100)}/yr
+                                                            </div>
+                                                            <div className="text-sm font-mono text-violet-600">
+                                                                {currency(grossIncome * allocations.longTerm / 100 / 12)}/mo
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="0" max="30" step="1" 
+                                                        value={allocations.longTerm} onChange={(e) => updateAllocation('longTerm', e.target.value)}
+                                                        className="w-full h-3 bg-violet-200 rounded-lg appearance-none cursor-pointer accent-violet-600 text-violet-600"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-6 relative transition-all duration-500">
+                        <h3 className="text-2xl font-bold text-slate-700 mb-4 text-center">Your Income Limit</h3>
+                        
+                        {breakdown.isDeficit && (
+                            <div className="text-center bg-red-100 text-red-900 p-4 rounded-lg mb-6 text-xl font-bold flex items-center justify-center gap-2 border border-red-200 shadow-sm animate-pulse">
+                                <Icons.AlertCircle className="w-6 h-6" />
+                                WARNING: You are {pctString(breakdown.pct.deficit)} OVER budget!
+                            </div>
+                        )}
+                        {!breakdown.isDeficit && showDiscretionary && breakdown.raw.fun >= 0 && (
+                            <div className="text-center bg-pink-50 text-pink-700 p-3 rounded mb-6 text-lg font-bold flex items-center justify-center gap-2 border border-pink-100">
+                                <Icons.ShoppingCart className="w-5 h-5" />
+                                You have {pctString(breakdown.pct.fun)} left for FUN!
+                            </div>
+                        )}
+                        {!breakdown.isDeficit && !showDiscretionary && (
+                            <div className="text-center text-slate-400 text-lg mb-6">You are within your income limit.</div>
+                        )}
+
+                        <div className="h-56 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart 
+                                    layout="vertical" 
+                                    data={stackedData} 
+                                    margin={{ top: 20, right: 30, left: 30, bottom: 20 }}
+                                >
+                                    <defs>
+                                        <pattern id="hazardPattern" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+                                            <rect x="0" y="0" width="10" height="10" fill="#7f1d1d"/>
+                                            <line x1="0" y1="0" x2="0" y2="10" stroke="#000000" strokeWidth="5" />
+                                        </pattern>
+                                    </defs>
+                                    <XAxis type="number" domain={[0, chartDomainMax]} tickFormatter={(val) => `${Math.round(val)}%`} tick={{fontSize: 14}} />
+                                    <YAxis type="category" dataKey="name" hide />
+                                    <Tooltip 
+                                        contentStyle={{fontSize: '16px'}}
+                                        formatter={(value, name) => {
+                                            if (name === "Budget") return null;
+                                            if (name === "Taxes") return [`${Math.round(value)}%`, "Taxes"];
+                                            if (name === "Essentials") return [`${Math.round(value)}%`, "Essentials"];
+                                            if (name === "Consumer Debt") return [`${Math.round(value)}%`, "Debt Payments"];
+                                            if (name === "Giving") return [`${Math.round(value)}%`, "Giving"];
+                                            if (name === "Short Term") return [`${Math.round(value)}%`, "Short Term"];
+                                            if (name === "Long Term") return [`${Math.round(value)}%`, "Long Term"];
+                                            if (name === "Fun") return [`${Math.round(value)}%`, "Fun (Remainder)"];
+                                            if (name === "Deficit") return [`${Math.round(value)}%`, "DEFICIT (Unfunded)"];
+                                            return [`${Math.round(value)}%`, name];
+                                        }}
+                                        cursor={{fill: 'transparent'}}
+                                    />
+                                    
+                                    <Bar dataKey="taxes" name="Taxes" stackId="a" fill="#ef4444" radius={[4, 0, 0, 4]}>
+                                        <Cell fill="#ef4444" />
+                                    </Bar>
+                                    <Bar dataKey="essentials" name="Essentials" stackId="a" fill="#f59e0b">
+                                        <Cell fill="#f59e0b" />
+                                    </Bar>
+                                    
+                                    {showDebt && (
+                                        <Bar dataKey="consumerDebt" name="Consumer Debt" stackId="a" fill="#475569">
+                                            <Cell fill="#475569" />
+                                        </Bar>
+                                    )}
+
+                                    {!showDiscretionary ? (
+                                        <>
+                                            {!breakdown.isDeficit && (
+                                                <Bar dataKey="margin" name="The Margin" stackId="a" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                                                    <Cell fill="#3b82f6" />
+                                                </Bar>
+                                            )}
+                                            {breakdown.isDeficit && (
+                                                <Bar dataKey="deficit_overflow" name="Deficit" stackId="a" fill="url(#hazardPattern)" radius={[0, 4, 4, 0]}>
+                                                    <Cell fill="url(#hazardPattern)" />
+                                                </Bar>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Bar dataKey="giving" name="Giving" stackId="a" fill="#10b981"><Cell fill="#10b981" /></Bar>
+                                            <Bar dataKey="shortTerm" name="Short Term" stackId="a" fill="#0ea5e9"><Cell fill="#0ea5e9" /></Bar>
+                                            <Bar dataKey="longTerm" name="Long Term" stackId="a" fill="#8b5cf6"><Cell fill="#8b5cf6" /></Bar>
+                                            <Bar dataKey="fun" name="Fun" stackId="a" fill="#ec4899"><Cell fill="#ec4899" /></Bar>
+                                            
+                                            {breakdown.isDeficit && (
+                                                <Bar dataKey="deficit_overflow" name="Deficit" stackId="a" fill="url(#hazardPattern)" radius={[0, 4, 4, 0]}>
+                                                    <Cell fill="url(#hazardPattern)" />
+                                                </Bar>
+                                            )}
+                                        </>
+                                    )}
+                                    
+                                    <ReferenceLine x={100} stroke="#dc2626" strokeWidth={4} strokeDasharray="5 5" isFront>
+                                        <div className="text-sm font-bold text-red-600 absolute -top-8 -right-8 bg-white px-2 py-1 border border-red-200 rounded shadow-sm">
+                                            PAYCHECK ENDS HERE
+                                        </div>
+                                    </ReferenceLine>
+
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="flex justify-center gap-x-8 gap-y-3 mt-4 text-base md:text-lg font-medium flex-wrap border-t pt-4">
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-500 rounded"></div> Taxes</div>
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-orange-500 rounded"></div> Essentials</div>
+                            {showDebt && (
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 bg-slate-600 rounded"></div> Debt Payment</div>
+                            )}
+                            
+                            {!showDiscretionary ? (
+                                !breakdown.isDeficit ? (
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-500 rounded"></div> Margin ({pctString(breakdown.pct.margin)})</div>
+                                ) : (
+                                    <div className="flex items-center gap-2 font-bold text-red-900"><div className="w-4 h-4 bg-red-900 rounded"></div> DEBT ({pctString(breakdown.pct.deficit)})</div>
+                                )
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-emerald-500 rounded"></div> Give</div>
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-sky-500 rounded"></div> Short-Term</div>
+                                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-violet-500 rounded"></div> Long-Term</div>
+                                    {!breakdown.isDeficit ? (
+                                        <div className="flex items-center gap-2"><div className="w-4 h-4 bg-pink-500 rounded"></div> Fun</div>
+                                    ) : (
+                                         <div className="flex items-center gap-2 font-bold text-red-900"><div className="w-4 h-4 bg-red-900 rounded"></div> OVER BUDGET</div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={`grid grid-cols-1 gap-6 mb-8 ${showDiscretionary && showDebt ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+                        <StatCard 
+                            title="Taxes" 
+                            pct={breakdown.pct.taxes}
+                            raw={breakdown.raw.taxes}
+                            icon={<Icons.Landmark className="w-6 h-6" />} 
+                            color="text-red-600" bg="bg-red-50" borderColor="border-red-100"
+                        />
+                        <StatCard 
+                            title="Essentials" 
+                            pct={breakdown.pct.essentials}
+                            raw={breakdown.raw.essentials}
+                            icon={<Icons.Home className="w-6 h-6" />} 
+                            color="text-orange-600" bg="bg-orange-50" borderColor="border-orange-100"
+                        />
+                        
+                        {showDebt && (
+                            <StatCard 
+                                title="Consumer Debt" 
+                                pct={breakdown.pct.debt}
+                                raw={breakdown.raw.debt}
+                                icon={<Icons.CreditCard className="w-6 h-6" />} 
+                                color="text-slate-600" bg="bg-slate-100" borderColor="border-slate-200"
+                            />
+                        )}
+
+                        {!showDiscretionary ? (
+                            <div className={`${showDebt ? 'col-span-1' : 'col-span-2'} p-6 rounded-lg border-2 flex flex-col justify-between transition-transform hover:scale-[1.01] ${breakdown.isDeficit ? 'hazard-card' : 'bg-blue-50 border-blue-100'}`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className={`p-2 rounded-md ${breakdown.isDeficit ? 'bg-white/90 text-red-800' : 'bg-white/60 text-blue-600'}`}>
+                                        {breakdown.isDeficit ? <Icons.AlertCircle className="w-6 h-6" /> : <Icons.TrendingDown className="w-6 h-6" />}
+                                    </div>
+                                    <span className={`text-lg font-bold opacity-90 ${breakdown.isDeficit ? 'text-white' : 'text-blue-700'}`}>
+                                        {breakdown.isDeficit ? "Deficit (Unpaid)" : "The Margin (Yours)"}
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline gap-2 mt-2">
+                                    <span className={`text-5xl font-extrabold ${breakdown.isDeficit ? 'text-white' : 'text-blue-700'}`}>
+                                        {pctString(breakdown.isDeficit ? breakdown.pct.deficit : breakdown.pct.margin)}
+                                    </span>
+                                </div>
+                                <div className={`text-xl mt-3 pt-2 border-t ${breakdown.isDeficit ? 'border-white/20 text-white' : 'border-black/5 text-blue-700'} opacity-75 font-mono`}>
+                                    <div className="font-semibold">{currency(breakdown.isDeficit ? breakdown.raw.deficit : breakdown.raw.margin)} / yr</div>
+                                    <div className="text-base mt-1">{currency((breakdown.isDeficit ? breakdown.raw.deficit : breakdown.raw.margin)/12)} / mo</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="p-6 rounded-lg border border-indigo-100 bg-indigo-50 flex flex-col gap-2">
+                                    <div className="flex justify-between items-end border-b border-indigo-200 pb-2">
+                                        <span className="text-xl font-bold text-indigo-600 uppercase">Allocated Goals</span>
+                                        <span className="text-4xl font-bold text-indigo-800">{pctString(allocations.giving + allocations.shortTerm + allocations.longTerm)}</span>
+                                    </div>
+                                    <div className="space-y-3 text-xl text-indigo-700">
+                                        <div className="flex justify-between">
+                                            <span>Give ({allocations.giving}%)</span>
+                                            <span className="font-mono">{currency(breakdown.raw.giving/12)}/mo</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Short ({allocations.shortTerm}%)</span>
+                                            <span className="font-mono">{currency(breakdown.raw.shortTerm/12)}/mo</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Long ({allocations.longTerm}%)</span>
+                                            <span className="font-mono">{currency(breakdown.raw.longTerm/12)}/mo</span>
+                                        </div>
+                                    </div>
+                                    <div className="pt-2 mt-2 border-t border-indigo-200 text-right text-xl font-bold text-indigo-800 flex flex-col items-end">
+                                        <span>{currency(breakdown.raw.giving + breakdown.raw.shortTerm + breakdown.raw.longTerm)} / yr</span>
+                                        <span>{currency((breakdown.raw.giving + breakdown.raw.shortTerm + breakdown.raw.longTerm)/12)} / mo</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-6 rounded-lg border flex flex-col justify-between ${breakdown.isDeficit ? 'hazard-card' : 'bg-pink-50 border-pink-100'}`}>
+                                    <span className={`text-xl font-bold uppercase ${breakdown.isDeficit ? 'text-white' : 'text-pink-600'}`}>
+                                        {breakdown.isDeficit ? 'Unfunded Gap' : 'Remaining Fun'}
+                                    </span>
+                                    <div className="text-right">
+                                        <span className={`text-7xl font-bold block ${breakdown.isDeficit ? 'text-white' : 'text-pink-600'}`}>
+                                            {pctString(breakdown.isDeficit ? breakdown.pct.deficit : breakdown.pct.fun)}
+                                        </span>
+                                        <div className={`text-3xl font-bold mt-2 font-mono flex flex-col items-end ${breakdown.isDeficit ? 'text-red-50' : 'text-pink-700'}`}>
+                                            <span>{currency(breakdown.isDeficit ? breakdown.raw.deficit : breakdown.raw.fun)} / yr</span>
+                                            <span>{currency((breakdown.isDeficit ? breakdown.raw.deficit : breakdown.raw.fun)/12)} / mo</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                            <div className="flex items-center justify-between mb-6 border-b pb-4">
+                                <h3 className="text-4xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Icons.Landmark className="w-8 h-8 text-red-500" />
+                                    Tax Breakdown
+                                </h3>
+                                <span className="text-4xl font-bold text-red-600">{pctString(breakdown.pct.taxes)}</span>
+                            </div>
+                            
+                            <div className="mb-4 bg-slate-50 p-5 rounded text-xl text-slate-600 flex justify-between items-center">
+                                <div className="flex gap-2 items-center">
+                                    <Icons.Info className="w-6 h-6" />
+                                    <span>Highest Bracket: <strong>{Math.round(breakdown.fed_stats.marginal)}%</strong></span>
+                                </div>
+                                <div>
+                                    <span>Effective Fed Rate: <strong>{Math.round(breakdown.fed_stats.effective)}%</strong></span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div className="h-56 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={breakdown.taxes_breakdown}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={2}
+                                                dataKey="value"
+                                            >
+                                                {breakdown.taxes_breakdown.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip formatter={(value) => `${Math.round(value)}% of Total Income`} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="space-y-4 text-2xl">
+                                    {breakdown.taxes_breakdown.map((item) => (
+                                        <div key={item.name} className="flex justify-between items-center group">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full" style={{backgroundColor: item.color}}></div>
+                                                <span className="text-slate-600 font-medium">{item.name}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-bold text-slate-700">{pctString(item.value)}</div>
+                                                <div className="text-lg text-slate-400 font-mono">{currency(item.raw)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                            <div className="flex items-center justify-between mb-6 border-b pb-4">
+                                <h3 className="text-4xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Icons.ShoppingCart className="w-8 h-8 text-orange-500" />
+                                    Essentials Breakdown
+                                </h3>
+                                <span className="text-4xl font-bold text-orange-600">{pctString(breakdown.pct.essentials)}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                                <div className="h-56 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={breakdown.life_breakdown}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={2}
+                                                dataKey="value"
+                                            >
+                                                {breakdown.life_breakdown.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip formatter={(value) => `${Math.round(value)}% of Total Income`} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="space-y-4 text-2xl">
+                                    {breakdown.life_breakdown.map((item) => (
+                                        <div key={item.name} className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded-full" style={{backgroundColor: item.color}}></div>
+                                                <span className="text-slate-600 font-medium">{item.name}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-bold text-slate-700">{pctString(item.value)}</div>
+                                                <div className="text-lg text-slate-400 font-mono">{currency(item.raw)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const StatCard = ({ title, pct, raw, icon, color, bg, borderColor, isHighlight, isDebt }) => (
+            <div className={`p-6 rounded-lg border-2 flex flex-col justify-between transition-transform hover:scale-[1.02] ${bg} ${borderColor}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-md bg-white/60 ${color}`}>
+                            {icon}
+                        </div>
+                        <span className={`text-lg font-bold ${color} opacity-90`}>{title}</span>
+                    </div>
+                </div>
+                
+                <div className="flex items-baseline gap-2 mt-2">
+                    <span className={`text-5xl font-extrabold ${color}`}>
+                        {Math.round(pct)}%
+                    </span>
+                    <span className={`text-base font-medium ${color} opacity-70`}>
+                        {isDebt ? 'OVER Income' : 'of Income'}
+                    </span>
+                </div>
+                
+                <div className={`text-xl mt-3 pt-2 border-t border-black/5 ${color} opacity-75 font-mono`}>
+                    <div className="font-semibold">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(raw)} / yr</div>
+                    <div className="text-base mt-1">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(raw / 12)} / mo</div>
+                </div>
+            </div>
+        );
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<FinancialMargin />);
+    </script>
+</body>
+</html>
