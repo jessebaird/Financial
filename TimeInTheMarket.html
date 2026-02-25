@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time in the Market Explorer</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (UMD versions for standalone use) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel standalone to compile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // Inline SVG Icons
+        const TrendingUpIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>;
+        const ClockIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
+        const TargetIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>;
+        const RocketIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>;
+        const SettingsIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>;
+        const EyeIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const EyeOffIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>;
+        const AlertCircleIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
+        const ShieldCheckIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+
+        const getMilestoneMultiplier = (age) => {
+            let m = 1;
+            if (age >= 25) m *= 10;
+            if (age >= 30) m *= 2;
+            if (age >= 35) m *= 2;
+            if (age >= 50) m *= 2;
+            return m;
+        };
+
+        function App() {
+            // Global settings
+            const [returnRate, setReturnRate] = useState(10);
+            const [retirementAge, setRetirementAge] = useState(65);
+            const [useInflation, setUseInflation] = useState(false);
+            const [inflationRate, setInflationRate] = useState(3);
+            const [linkAges, setLinkAges] = useState(false);
+            
+            // Target Mode settings
+            const [targetMode, setTargetMode] = useState(false);
+            const [targetAmount, setTargetAmount] = useState(1000000);
+
+            // Saver Mode
+            const [showSaver, setShowSaver] = useState(false);
+            
+            // Scenario Configurations (Defaulting to just the first one visible for a better presentation flow)
+            const [scenarios, setScenarios] = useState({
+                smartStudent: { isVisible: true, startAge: 18, initialMonthly: 120 },
+                procrastinator: { isVisible: false, startAge: 40, initialMonthly: 1100 },
+                gradual: { isVisible: false, startAge: 18, initialMonthly: 20, annualIncreaseRate: 12 },
+                milestones: { isVisible: false, startAge: 18, initialMonthly: 20 }
+            });
+
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            // Generate the dataset year by year
+            const { data, summary, catchUpMonthly, requiredMonthly, requiredMonthlySaver } = useMemo(() => {
+                const rate = returnRate / 100;
+                const saverRate = 0.04; // Fixed 4% for the savings comparison
+                const infRate = useInflation ? (inflationRate / 100) : 0;
+                const finalDiscount = Math.pow(1 + infRate, retirementAge - 18);
+
+                // Initial pass: If Target Mode is ON, calculate the required starting monthly contributions
+                let reqMonthly = {
+                    student: scenarios.smartStudent.initialMonthly,
+                    procrastinator: scenarios.procrastinator.initialMonthly,
+                    gradual: scenarios.gradual.initialMonthly,
+                    milestones: scenarios.milestones.initialMonthly
+                };
+                
+                let reqMonthlySaver = { ...reqMonthly }; // If Target mode off, saver uses exact same initial inputs
+
+                if (targetMode && targetAmount > 0) {
+                    // Calculate "multipliers" (final balances if starting contribution is $1)
+                    let b1 = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                    let cm1 = { student: 1, procrastinator: 1, gradual: 1, milestones: 1 };
+                    
+                    let b1Saver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                    let cm1Saver = { student: 1, procrastinator: 1, gradual: 1, milestones: 1 };
+                    
+                    for (let age = 18; age <= retirementAge; age++) {
+                        // Invested Multipliers
+                        if (age >= scenarios.smartStudent.startAge) {
+                            b1.student = b1.student * (1 + rate) + cm1.student * 12;
+                        }
+                        if (age >= scenarios.procrastinator.startAge) {
+                            b1.procrastinator = b1.procrastinator * (1 + rate) + cm1.procrastinator * 12;
+                        }
+                        if (age >= scenarios.gradual.startAge) {
+                            b1.gradual = b1.gradual * (1 + rate) + cm1.gradual * 12;
+                            cm1.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                        }
+                        if (age >= scenarios.milestones.startAge) {
+                            b1.milestones = b1.milestones * (1 + rate) + getMilestoneMultiplier(age) * 12;
+                        }
+                        
+                        // Saver Multipliers
+                        if (age >= scenarios.smartStudent.startAge) {
+                            b1Saver.student = b1Saver.student * (1 + saverRate) + cm1Saver.student * 12;
+                        }
+                        if (age >= scenarios.procrastinator.startAge) {
+                            b1Saver.procrastinator = b1Saver.procrastinator * (1 + saverRate) + cm1Saver.procrastinator * 12;
+                        }
+                        if (age >= scenarios.gradual.startAge) {
+                            b1Saver.gradual = b1Saver.gradual * (1 + saverRate) + cm1Saver.gradual * 12;
+                            cm1Saver.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                        }
+                        if (age >= scenarios.milestones.startAge) {
+                            b1Saver.milestones = b1Saver.milestones * (1 + saverRate) + getMilestoneMultiplier(age) * 12;
+                        }
+                    }
+                    
+                    // Apply inflation discount to the multipliers
+                    b1.student /= finalDiscount;
+                    b1.procrastinator /= finalDiscount;
+                    b1.gradual /= finalDiscount;
+                    b1.milestones /= finalDiscount;
+                    
+                    b1Saver.student /= finalDiscount;
+                    b1Saver.procrastinator /= finalDiscount;
+                    b1Saver.gradual /= finalDiscount;
+                    b1Saver.milestones /= finalDiscount;
+                    
+                    // Calculate required amount to hit the Target Portfolio
+                    reqMonthly = {
+                        student: b1.student > 0 ? targetAmount / b1.student : 0,
+                        procrastinator: b1.procrastinator > 0 ? targetAmount / b1.procrastinator : 0,
+                        gradual: b1.gradual > 0 ? targetAmount / b1.gradual : 0,
+                        milestones: b1.milestones > 0 ? targetAmount / b1.milestones : 0
+                    };
+                    
+                    reqMonthlySaver = {
+                        student: b1Saver.student > 0 ? targetAmount / b1Saver.student : 0,
+                        procrastinator: b1Saver.procrastinator > 0 ? targetAmount / b1Saver.procrastinator : 0,
+                        gradual: b1Saver.gradual > 0 ? targetAmount / b1Saver.gradual : 0,
+                        milestones: b1Saver.milestones > 0 ? targetAmount / b1Saver.milestones : 0
+                    };
+                }
+
+                // Second pass: Calculate actual chart data
+                let chartData = [];
+                let balances = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                let balancesSaver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                let totalInvested = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                let totalInvestedSaver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                
+                let currentMonthly = { ...reqMonthly };
+                let currentMonthlySaver = { ...reqMonthlySaver };
+                
+                // For milestones, reverse engineer the absolute "Age 18 base" 
+                let milestoneBase = targetMode 
+                    ? reqMonthly.milestones 
+                    : scenarios.milestones.initialMonthly / getMilestoneMultiplier(scenarios.milestones.startAge);
+                    
+                let milestoneBaseSaver = targetMode 
+                    ? reqMonthlySaver.milestones 
+                    : scenarios.milestones.initialMonthly / getMilestoneMultiplier(scenarios.milestones.startAge);
+
+                for (let age = 18; age <= retirementAge; age++) {
+                    let row = { age };
+                    let sContrib = 0, pContrib = 0, gContrib = 0, mContrib = 0;
+                    let sContribSaver = 0, pContribSaver = 0, gContribSaver = 0, mContribSaver = 0;
+
+                    // Discount factor for "Real" balances (adjusting for inflation)
+                    const discount = Math.pow(1 + infRate, age - 18);
+
+                    // 1. The Early Starter
+                    if (age >= scenarios.smartStudent.startAge) {
+                        sContrib = currentMonthly.student * 12;
+                        sContribSaver = currentMonthlySaver.student * 12;
+                        
+                        balances.student = balances.student * (1 + rate) + sContrib;
+                        balancesSaver.student = balancesSaver.student * (1 + saverRate) + sContribSaver;
+                        
+                        totalInvested.student += sContrib;
+                        totalInvestedSaver.student += sContribSaver;
+                    }
+                    row.student = balances.student / discount;
+                    row.studentSaver = balancesSaver.student / discount;
+                    row.studentInvested = totalInvested.student / discount;
+                    row.studentContrib = sContrib; // Keep nominal for display
+
+                    // 2. The Procrastinator / Catch-Up
+                    if (age >= scenarios.procrastinator.startAge) {
+                        pContrib = currentMonthly.procrastinator * 12;
+                        pContribSaver = currentMonthlySaver.procrastinator * 12;
+                        
+                        balances.procrastinator = balances.procrastinator * (1 + rate) + pContrib;
+                        balancesSaver.procrastinator = balancesSaver.procrastinator * (1 + saverRate) + pContribSaver;
+                        
+                        totalInvested.procrastinator += pContrib;
+                        totalInvestedSaver.procrastinator += pContribSaver;
+                    }
+                    row.procrastinator = balances.procrastinator / discount;
+                    row.procrastinatorSaver = balancesSaver.procrastinator / discount;
+                    row.procrastinatorInvested = totalInvested.procrastinator / discount;
+                    row.procrastinatorContrib = pContrib;
+
+                    // 3. Gradual Increase
+                    if (age >= scenarios.gradual.startAge) {
+                        gContrib = currentMonthly.gradual * 12;
+                        gContribSaver = currentMonthlySaver.gradual * 12;
+                        
+                        balances.gradual = balances.gradual * (1 + rate) + gContrib;
+                        balancesSaver.gradual = balancesSaver.gradual * (1 + saverRate) + gContribSaver;
+                        
+                        totalInvested.gradual += gContrib;
+                        totalInvestedSaver.gradual += gContribSaver;
+                        
+                        currentMonthly.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                        currentMonthlySaver.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                    }
+                    row.gradual = balances.gradual / discount;
+                    row.gradualSaver = balancesSaver.gradual / discount;
+                    row.gradualInvested = totalInvested.gradual / discount;
+                    row.gradualContrib = gContrib;
+
+                    // 4. Milestones
+                    if (age >= scenarios.milestones.startAge) {
+                        let mMult = getMilestoneMultiplier(age);
+                        mContrib = milestoneBase * mMult * 12;
+                        mContribSaver = milestoneBaseSaver * mMult * 12;
+                        
+                        balances.milestones = balances.milestones * (1 + rate) + mContrib;
+                        balancesSaver.milestones = balancesSaver.milestones * (1 + saverRate) + mContribSaver;
+                        
+                        totalInvested.milestones += mContrib;
+                        totalInvestedSaver.milestones += mContribSaver;
+                    }
+                    row.milestones = balances.milestones / discount;
+                    row.milestonesSaver = balancesSaver.milestones / discount;
+                    row.milestonesInvested = totalInvested.milestones / discount;
+                    row.milestonesContrib = mContrib;
+
+                    chartData.push(row);
+                }
+
+                // Apply final discount to summaries to match chart
+                const finalBalances = {
+                    student: balances.student / finalDiscount,
+                    procrastinator: balances.procrastinator / finalDiscount,
+                    gradual: balances.gradual / finalDiscount,
+                    milestones: balances.milestones / finalDiscount
+                };
+                const finalBalancesSaver = {
+                    student: balancesSaver.student / finalDiscount,
+                    procrastinator: balancesSaver.procrastinator / finalDiscount,
+                    gradual: balancesSaver.gradual / finalDiscount,
+                    milestones: balancesSaver.milestones / finalDiscount
+                };
+                const finalInvested = {
+                    student: totalInvested.student / finalDiscount,
+                    procrastinator: totalInvested.procrastinator / finalDiscount,
+                    gradual: totalInvested.gradual / finalDiscount,
+                    milestones: totalInvested.milestones / finalDiscount
+                };
+                const finalInvestedSaver = {
+                    student: totalInvestedSaver.student / finalDiscount,
+                    procrastinator: totalInvestedSaver.procrastinator / finalDiscount,
+                    gradual: totalInvestedSaver.gradual / finalDiscount,
+                    milestones: totalInvestedSaver.milestones / finalDiscount
+                };
+
+                // Calculate Cost of Waiting (how much Procrastinator needs to match Early Starter)
+                let requiredCatchUp = 0;
+                const n = retirementAge - scenarios.procrastinator.startAge + 1; // +1 mathematically required to account for inclusive compounding years
+                if (n > 0 && rate > 0) {
+                    const target = finalBalances.student;
+                    // PMT = FV * r / ((1+r)^n - 1)
+                    requiredCatchUp = (target * rate) / (Math.pow(1 + rate, n) - 1) / 12;
+                }
+
+                return { 
+                    data: chartData, 
+                    summary: { 
+                        balances: finalBalances, 
+                        balancesSaver: finalBalancesSaver, 
+                        totalInvested: finalInvested,
+                        totalInvestedSaver: finalInvestedSaver 
+                    },
+                    catchUpMonthly: requiredCatchUp,
+                    requiredMonthly: {
+                        ...reqMonthly,
+                        milestones: reqMonthly.milestones * getMilestoneMultiplier(scenarios.milestones.startAge)
+                    },
+                    requiredMonthlySaver: {
+                        ...reqMonthlySaver,
+                        milestones: reqMonthlySaver.milestones * getMilestoneMultiplier(scenarios.milestones.startAge)
+                    }
+                };
+            }, [returnRate, retirementAge, scenarios, useInflation, inflationRate, targetMode, targetAmount]);
+
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    maximumFractionDigits: 0,
+                }).format(value || 0);
+            };
+
+            const updateScenario = (key, field, value) => {
+                setScenarios(prev => ({
+                    ...prev,
+                    [key]: { ...prev[key], [field]: field === 'isVisible' ? value : Number(value) }
+                }));
+            };
+
+            const handleAgeChange = (sourceKey, newAge) => {
+                const ageValue = Number(newAge);
+                if (linkAges) {
+                    setScenarios(prev => {
+                        const next = { ...prev };
+                        for (const k in next) {
+                            next[k] = { ...next[k], startAge: ageValue };
+                        }
+                        return next;
+                    });
+                } else {
+                    updateScenario(sourceKey, 'startAge', ageValue);
+                }
+            };
+
+            const toggleVisibility = (key) => {
+                updateScenario(key, 'isVisible', !scenarios[key].isVisible);
+            };
+
+            // Manage Chart.js instance
+            useEffect(() => {
+                if (!chartRef.current) return;
+
+                if (chartInstance.current) {
+                    chartInstance.current.destroy();
+                }
+
+                const ctx = chartRef.current.getContext('2d');
+                chartInstance.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.age),
+                        datasets: [
+                            // 1. Main Investment Datasets
+                            {
+                                label: 'Early Starter',
+                                data: data.map(d => d.student),
+                                investedData: data.map(d => d.studentInvested),
+                                hidden: !scenarios.smartStudent.isVisible,
+                                borderColor: '#3b82f6',
+                                backgroundColor: '#3b82f6',
+                                borderWidth: 4,
+                                pointRadius: 0,
+                                pointHoverRadius: 8,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Playing Catch-Up',
+                                data: data.map(d => d.procrastinator),
+                                investedData: data.map(d => d.procrastinatorInvested),
+                                hidden: !scenarios.procrastinator.isVisible,
+                                borderColor: '#ef4444',
+                                backgroundColor: '#ef4444',
+                                borderWidth: 4,
+                                pointRadius: 0,
+                                pointHoverRadius: 8,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Gradual Increase',
+                                data: data.map(d => d.gradual),
+                                investedData: data.map(d => d.gradualInvested),
+                                hidden: !scenarios.gradual.isVisible,
+                                borderColor: '#10b981',
+                                backgroundColor: '#10b981',
+                                borderWidth: 4,
+                                pointRadius: 0,
+                                pointHoverRadius: 8,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Big Milestones',
+                                data: data.map(d => d.milestones),
+                                investedData: data.map(d => d.milestonesInvested),
+                                hidden: !scenarios.milestones.isVisible,
+                                borderColor: '#8b5cf6',
+                                backgroundColor: '#8b5cf6',
+                                borderWidth: 4,
+                                pointRadius: function(context) {
+                                    const age = data[context.dataIndex]?.age;
+                                    return [25, 30, 35, 50].includes(age) ? 8 : 0;
+                                },
+                                pointBackgroundColor: function(context) {
+                                    if (context.dataIndex === undefined) return '#8b5cf6';
+                                    const age = data[context.dataIndex]?.age;
+                                    return [25, 30, 35, 50].includes(age) ? '#fef08a' : '#8b5cf6';
+                                },
+                                pointBorderColor: '#8b5cf6',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 10,
+                                tension: 0.1
+                            },
+                            // 2. Savings Datasets (Rendered under main lines if toggled on)
+                            {
+                                label: 'Early Starter (4% Saved)',
+                                data: data.map(d => d.studentSaver),
+                                investedData: data.map(d => targetMode ? d.studentInvested : d.studentInvested), // Reused logic handles both
+                                hidden: !scenarios.smartStudent.isVisible || !showSaver,
+                                borderColor: 'rgba(59, 130, 246, 0.6)',
+                                borderWidth: 3,
+                                borderDash: [6, 6],
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Playing Catch-Up (4% Saved)',
+                                data: data.map(d => d.procrastinatorSaver),
+                                investedData: data.map(d => d.procrastinatorInvested),
+                                hidden: !scenarios.procrastinator.isVisible || !showSaver,
+                                borderColor: 'rgba(239, 68, 68, 0.6)',
+                                borderWidth: 3,
+                                borderDash: [6, 6],
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Gradual Increase (4% Saved)',
+                                data: data.map(d => d.gradualSaver),
+                                investedData: data.map(d => d.gradualInvested),
+                                hidden: !scenarios.gradual.isVisible || !showSaver,
+                                borderColor: 'rgba(16, 185, 129, 0.6)',
+                                borderWidth: 3,
+                                borderDash: [6, 6],
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Big Milestones (4% Saved)',
+                                data: data.map(d => d.milestonesSaver),
+                                investedData: data.map(d => d.milestonesInvested),
+                                hidden: !scenarios.milestones.isVisible || !showSaver,
+                                borderColor: 'rgba(139, 92, 246, 0.6)',
+                                borderWidth: 3,
+                                borderDash: [6, 6],
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            tooltip: {
+                                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                titleColor: '#0f172a',
+                                bodyColor: '#1e293b',
+                                borderColor: '#cbd5e1',
+                                borderWidth: 2,
+                                padding: 16,
+                                boxPadding: 8,
+                                titleFont: { size: 20, weight: 'bold' },
+                                bodyFont: { size: 18 },
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return 'Age ' + tooltipItems[0].label;
+                                    },
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+                                    },
+                                    afterLabel: function(context) {
+                                        // Use Target Mode specific invested data if showing saver line 
+                                        const isSaverLine = context.dataset.label.includes('Saved');
+                                        const invested = isSaverLine && targetMode 
+                                            ? data[context.dataIndex][context.dataset.dataKey.replace('Saver', 'Invested') + 'Saver'] || context.dataset.investedData[context.dataIndex]
+                                            : context.dataset.investedData[context.dataIndex];
+                                            
+                                        const val = context.parsed.y;
+                                        const earnings = val - invested;
+                                        return `   Invested: ${formatCurrency(invested)} | Earnings: ${formatCurrency(earnings)}`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: false // Disabled default legend to use custom HTML legend in the header
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: { 
+                                    display: true, 
+                                    text: 'Age', 
+                                    color: '#475569', 
+                                    font: { weight: 'bold', size: 18 } 
+                                },
+                                grid: { display: false },
+                                ticks: { 
+                                    color: '#475569',
+                                    font: { size: 16, weight: '600' }
+                                }
+                            },
+                            y: {
+                                grid: { color: '#e2e8f0', borderDash: [4, 4], lineWidth: 2 },
+                                ticks: {
+                                    color: '#475569',
+                                    font: { size: 16, weight: '600' },
+                                    callback: function(value) {
+                                        if (value >= 1000000) {
+                                            return '$' + (value / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+                                        }
+                                        if (value >= 1000) {
+                                            return '$' + (value / 1000).toFixed(0) + 'k';
+                                        }
+                                        return '$' + value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [data, scenarios, showSaver, targetMode]);
+
+            const renderTable = (scenarioKey, title, dataKey, contribKey, borderClass) => {
+                // Ensure table only renders if the scenario is visible
+                if (!scenarios[scenarioKey].isVisible) {
+                    return <div className="hidden xl:block"></div>;
+                }
+                
+                return (
+                    <div className={`bg-white rounded-2xl shadow-md border-t-8 border-x-2 border-b-2 border-x-slate-200 border-b-slate-200 ${borderClass} overflow-hidden`}>
+                        <div className="p-4 bg-slate-50 border-b-2 border-slate-200 text-center font-bold text-slate-800 text-xl">
+                            {title} Detail
+                        </div>
+                        <div className="p-4 pt-3">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-slate-600 text-sm md:text-base uppercase tracking-wider font-bold border-b-2 border-slate-200">
+                                        <th className="pb-3 pt-1">Age</th>
+                                        <th className="pb-3 pt-1 text-right">Monthly</th>
+                                        <th className="pb-3 pt-1 text-right">Annual</th>
+                                        <th className="pb-3 pt-1 text-right">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-base sm:text-lg">
+                                    {data.map(row => {
+                                        const isMilestoneRow = scenarioKey === 'milestones' && [25, 30, 35, 50].includes(row.age);
+                                        return (
+                                        <tr key={row.age} className={`border-t border-slate-100 transition-colors ${isMilestoneRow ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-slate-100'}`}>
+                                            <td className={`py-2.5 text-slate-700 ${isMilestoneRow ? 'font-bold text-purple-700 flex items-center gap-2' : 'font-medium'}`}>
+                                                {row.age}
+                                                {isMilestoneRow && <span className="text-[10px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">{row.age === 25 ? '10x Bump' : '2x Bump'}</span>}
+                                            </td>
+                                            <td className={`py-2.5 text-right ${isMilestoneRow ? 'font-bold text-purple-700' : 'text-slate-600'}`}>{formatCurrency(row[contribKey] / 12)}</td>
+                                            <td className={`py-2.5 text-right ${isMilestoneRow ? 'font-bold text-purple-700' : 'text-slate-800'}`}>{formatCurrency(row[contribKey])}</td>
+                                            <td className="py-2.5 text-right font-bold text-slate-900">{formatCurrency(row[dataKey])}</td>
+                                        </tr>
+                                    )})}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen relative bg-slate-50">
+                    
+                    {/* Sticky Header & Controls */}
+                    <div className="sticky top-0 z-50 pt-2 md:pt-4 pb-2 md:pb-4 px-2 md:px-4 bg-slate-50/95 backdrop-blur-md shadow-sm border-b border-slate-200">
+                        <div className="max-w-[2000px] mx-auto flex flex-col xl:flex-row xl:items-center justify-between bg-white p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 gap-4">
+                            
+                            {/* Left: Title */}
+                            <div className="flex items-center gap-3 shrink-0">
+                                <TrendingUpIcon className="text-blue-600 w-8 h-8 md:w-10 md:h-10" />
+                                <div>
+                                    <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Time in the Market</h1>
+                                    <p className="text-slate-500 text-sm md:text-base font-bold mt-1">Interactive visualization</p>
+                                </div>
+                            </div>
+                            
+                            {/* Right: Controls Grid */}
+                            <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full xl:w-auto xl:justify-end">
+                                
+                                {/* Link Ages Toggle */}
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setLinkAges(!linkAges)}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={linkAges}
+                                        readOnly
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
+                                    />
+                                    <span className="text-sm md:text-base font-bold cursor-pointer text-slate-700 select-none whitespace-nowrap pointer-events-none">Link Start Ages</span>
+                                </div>
+                            
+                                {/* Combined Target Mode Toggle & Input */}
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer hover:bg-slate-50 ${targetMode ? 'bg-white border-blue-400 ring-2 ring-blue-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setTargetMode(!targetMode)}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={targetMode}
+                                        readOnly
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
+                                    />
+                                    <span className="text-sm md:text-base font-bold cursor-pointer text-blue-700 select-none whitespace-nowrap pointer-events-none">Target Mode</span>
+                                    
+                                    <div className={`flex items-center ml-1 pl-2 border-l-2 transition-colors ${targetMode ? 'border-blue-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                        <span className={`font-bold text-lg mr-1 transition-colors ${targetMode ? 'text-blue-700' : 'text-slate-400'}`}>$</span>
+                                        <input 
+                                            type="text" 
+                                            value={targetAmount ? targetAmount.toLocaleString('en-US') : ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                                setTargetAmount(Number(val));
+                                            }}
+                                            disabled={!targetMode}
+                                            className={`w-28 text-right outline-none font-extrabold text-lg bg-transparent transition-colors ${targetMode ? 'text-blue-800' : 'text-slate-400 cursor-not-allowed'}`}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Show Saver Toggle */}
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setShowSaver(!showSaver)}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={showSaver}
+                                        readOnly
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
+                                    />
+                                    <span className="text-sm md:text-base font-bold cursor-pointer text-indigo-700 select-none flex items-center gap-1 whitespace-nowrap pointer-events-none">
+                                        <ShieldCheckIcon className="w-4 h-4"/>Compare to 4% Savings
+                                    </span>
+                                </div>
+
+                                {/* Inflation Toggle */}
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setUseInflation(!useInflation)}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={useInflation}
+                                        readOnly
+                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
+                                    />
+                                    <span className="text-sm md:text-base font-bold cursor-pointer text-amber-700 select-none whitespace-nowrap pointer-events-none">
+                                        Adjust for Inflation ({inflationRate}%)
+                                    </span>
+                                </div>
+                                
+                                {/* Return Input */}
+                                <div className="flex items-center px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 focus-within:border-blue-500 transition-colors">
+                                    <label className="text-sm md:text-base font-bold text-slate-700 mr-2 whitespace-nowrap">Return</label>
+                                    <input 
+                                        type="number" 
+                                        value={returnRate}
+                                        onChange={(e) => setReturnRate(Number(e.target.value))}
+                                        className="w-12 text-right outline-none font-bold text-lg text-slate-800 bg-transparent"
+                                    />
+                                    <span className="text-slate-500 font-bold text-lg ml-1">%</span>
+                                </div>
+
+                                {/* Target Age Input */}
+                                <div className="flex items-center px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 focus-within:border-blue-500 transition-colors">
+                                    <label className="text-sm md:text-base font-bold text-slate-700 mr-2 whitespace-nowrap">Target Age</label>
+                                    <input 
+                                        type="number" 
+                                        value={retirementAge}
+                                        onChange={(e) => setRetirementAge(Number(e.target.value))}
+                                        className="w-14 text-right outline-none font-bold text-lg text-slate-800 bg-transparent"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-[2000px] mx-auto space-y-4 px-2 md:px-4 pb-12">
+                        {/* Chart Section */}
+                        <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-2 border-slate-200 mt-2">
+                            <div className="flex flex-col md:flex-row justify-between md:items-center mb-3">
+                                <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-6">
+                                    <h2 className="text-2xl font-extrabold text-slate-800">Portfolio Value Over Time</h2>
+                                    
+                                    {/* Custom HTML Legend */}
+                                    <div className="flex flex-wrap items-center gap-4 md:gap-5 text-sm md:text-lg font-bold text-slate-700">
+                                        <div className={`flex items-center gap-2 cursor-pointer transition-all hover:opacity-80 ${!scenarios.smartStudent.isVisible ? 'opacity-30 grayscale' : ''}`} onClick={() => toggleVisibility('smartStudent')}>
+                                            <span className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-blue-500 shadow-sm border border-slate-200"></span>1. Early Starter
+                                        </div>
+                                        <div className={`flex items-center gap-2 cursor-pointer transition-all hover:opacity-80 ${!scenarios.procrastinator.isVisible ? 'opacity-30 grayscale' : ''}`} onClick={() => toggleVisibility('procrastinator')}>
+                                            <span className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-red-500 shadow-sm border border-slate-200"></span>2. Playing Catch-Up
+                                        </div>
+                                        <div className={`flex items-center gap-2 cursor-pointer transition-all hover:opacity-80 ${!scenarios.gradual.isVisible ? 'opacity-30 grayscale' : ''}`} onClick={() => toggleVisibility('gradual')}>
+                                            <span className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 shadow-sm border border-slate-200"></span>3. Gradual Increase
+                                        </div>
+                                        <div className={`flex items-center gap-2 cursor-pointer transition-all hover:opacity-80 ${!scenarios.milestones.isVisible ? 'opacity-30 grayscale' : ''}`} onClick={() => toggleVisibility('milestones')}>
+                                            <span className="relative flex items-center justify-center w-4 h-4 md:w-5 md:h-5 rounded-full bg-purple-500 shadow-sm border border-slate-200">
+                                                <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-yellow-300"></span>
+                                            </span>
+                                            4. Big Milestones
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-1 mt-2 md:mt-0">
+                                    {useInflation && <span className="text-sm md:text-base font-bold px-3 py-1 bg-amber-100 text-amber-900 rounded-full border border-amber-200 shadow-sm whitespace-nowrap">Viewing in Today's Dollars</span>}
+                                    {showSaver && <span className="text-xs md:text-sm font-bold text-slate-400">Dashed lines = 4% Savings</span>}
+                                </div>
+                            </div>
+                            <div className="h-[350px] md:h-[400px] w-full relative">
+                                <canvas ref={chartRef}></canvas>
+                            </div>
+                        </div>
+
+                        {/* Scenario Controls & Summaries */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+                            
+                            {/* Early Starter Card */}
+                            <div className={`flex flex-col bg-white rounded-2xl shadow-md border-t-8 border-x-2 border-b-2 border-x-slate-200 border-b-slate-200 transition-all duration-300 ${scenarios.smartStudent.isVisible ? 'border-t-blue-500 p-5' : 'border-t-slate-300 p-4 bg-slate-50 opacity-75'}`}>
+                                <div 
+                                    className={`flex items-center justify-between cursor-pointer group select-none ${scenarios.smartStudent.isVisible ? 'mb-3' : ''}`}
+                                    onClick={() => toggleVisibility('smartStudent')}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <ClockIcon className={`w-7 h-7 transition-colors ${scenarios.smartStudent.isVisible ? 'text-blue-500' : 'text-slate-400'}`} />
+                                        <h3 className={`font-extrabold text-xl transition-colors ${scenarios.smartStudent.isVisible ? 'text-slate-800 group-hover:text-blue-600' : 'text-slate-500 group-hover:text-slate-700'}`}>1. Early Starter</h3>
+                                    </div>
+                                    <div className="text-slate-400 group-hover:text-slate-700 p-1.5 rounded-xl group-hover:bg-slate-200 transition-colors" title="Toggle visibility">
+                                        {scenarios.smartStudent.isVisible ? <EyeIcon className="w-6 h-6" /> : <EyeOffIcon className="w-6 h-6" />}
+                                    </div>
+                                </div>
+                                
+                                {scenarios.smartStudent.isVisible && (
+                                    <div className="flex flex-col flex-1 animate-in fade-in duration-300">
+                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts early with a steady, fixed contribution.</p>
+                                        
+                                        <div className="space-y-4 mb-4">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
+                                                    <span className="text-2xl font-extrabold text-blue-600">{scenarios.smartStudent.startAge}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" 
+                                                    min="18" 
+                                                    max={retirementAge - 1} 
+                                                    value={scenarios.smartStudent.startAge} 
+                                                    onChange={e => handleAgeChange('smartStudent', e.target.value)} 
+                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" 
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-blue-300' : 'bg-slate-50 border-slate-300 focus-within:border-blue-500 transition-colors'}`}>
+                                                        <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            value={targetMode ? requiredMonthly.student.toFixed(0) : scenarios.smartStudent.initialMonthly} 
+                                                            onChange={e => updateScenario('smartStudent', 'initialMonthly', e.target.value)} 
+                                                            disabled={targetMode} 
+                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-blue-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                        />
+                                                    </div>
+                                                    {targetMode && showSaver && (
+                                                        <div className="text-xs font-bold text-slate-400 mt-1">
+                                                            vs {formatCurrency(requiredMonthlySaver.student)} saved
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner space-y-2 mt-auto">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-base font-semibold text-slate-500 mb-0.5">Final Balance</span>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-blue-600 tracking-tight leading-none">{formatCurrency(summary.balances.student)}</div>
+                                                    {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.student)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
+                                                <span className="text-base font-medium text-slate-500">Total Invested</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-slate-800">{formatCurrency(summary.totalInvested.student)}</div>
+                                                    {targetMode && showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs {formatCurrency(summary.totalInvestedSaver.student)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                                <span className="text-base font-bold text-slate-500 mb-0.5">Total Earnings</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-emerald-600 leading-none">+{formatCurrency(summary.balances.student - summary.totalInvested.student)}</div>
+                                                    {showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs +{formatCurrency(summary.balancesSaver.student - summary.totalInvestedSaver.student)}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Catch-Up Card */}
+                            <div className={`flex flex-col bg-white rounded-2xl shadow-md border-t-8 border-x-2 border-b-2 border-x-slate-200 border-b-slate-200 transition-all duration-300 ${scenarios.procrastinator.isVisible ? 'border-t-red-500 p-5' : 'border-t-slate-300 p-4 bg-slate-50 opacity-75'}`}>
+                                <div 
+                                    className={`flex items-center justify-between cursor-pointer group select-none ${scenarios.procrastinator.isVisible ? 'mb-3' : ''}`}
+                                    onClick={() => toggleVisibility('procrastinator')}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <TargetIcon className={`w-7 h-7 transition-colors ${scenarios.procrastinator.isVisible ? 'text-red-500' : 'text-slate-400'}`} />
+                                        <h3 className={`font-extrabold text-xl transition-colors ${scenarios.procrastinator.isVisible ? 'text-slate-800 group-hover:text-red-600' : 'text-slate-500 group-hover:text-slate-700'}`}>2. Playing Catch-Up</h3>
+                                    </div>
+                                    <div className="text-slate-400 group-hover:text-slate-700 p-1.5 rounded-xl group-hover:bg-slate-200 transition-colors" title="Toggle visibility">
+                                        {scenarios.procrastinator.isVisible ? <EyeIcon className="w-6 h-6" /> : <EyeOffIcon className="w-6 h-6" />}
+                                    </div>
+                                </div>
+                                
+                                {scenarios.procrastinator.isVisible && (
+                                    <div className="flex flex-col flex-1 animate-in fade-in duration-300">
+                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Waits until later, but contributes heavily to catch up.</p>
+                                        
+                                        <div className="space-y-4 mb-4">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
+                                                    <span className="text-2xl font-extrabold text-red-600">{scenarios.procrastinator.startAge}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" 
+                                                    min="18" 
+                                                    max={retirementAge - 1} 
+                                                    value={scenarios.procrastinator.startAge} 
+                                                    onChange={e => handleAgeChange('procrastinator', e.target.value)} 
+                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-600" 
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-red-300' : 'bg-slate-50 border-slate-300 focus-within:border-red-500 transition-colors'}`}>
+                                                        <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            value={targetMode ? requiredMonthly.procrastinator.toFixed(0) : scenarios.procrastinator.initialMonthly} 
+                                                            onChange={e => updateScenario('procrastinator', 'initialMonthly', e.target.value)} 
+                                                            disabled={targetMode} 
+                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-red-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                        />
+                                                    </div>
+                                                    {targetMode && showSaver && (
+                                                        <div className="text-xs font-bold text-slate-400 mt-1">
+                                                            vs {formatCurrency(requiredMonthlySaver.procrastinator)} saved
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner space-y-2 mt-auto">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-base font-semibold text-slate-500 mb-0.5">Final Balance</span>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-red-600 tracking-tight leading-none">{formatCurrency(summary.balances.procrastinator)}</div>
+                                                    {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.procrastinator)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
+                                                <span className="text-base font-medium text-slate-500">Total Invested</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-slate-800">{formatCurrency(summary.totalInvested.procrastinator)}</div>
+                                                    {targetMode && showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs {formatCurrency(summary.totalInvestedSaver.procrastinator)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                                <span className="text-base font-bold text-slate-500 mb-0.5">Total Earnings</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-emerald-600 leading-none">+{formatCurrency(summary.balances.procrastinator - summary.totalInvested.procrastinator)}</div>
+                                                    {showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs +{formatCurrency(summary.balancesSaver.procrastinator - summary.totalInvestedSaver.procrastinator)}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Gradual Card */}
+                            <div className={`flex flex-col bg-white rounded-2xl shadow-md border-t-8 border-x-2 border-b-2 border-x-slate-200 border-b-slate-200 transition-all duration-300 ${scenarios.gradual.isVisible ? 'border-t-emerald-500 p-5' : 'border-t-slate-300 p-4 bg-slate-50 opacity-75'}`}>
+                                <div 
+                                    className={`flex items-center justify-between cursor-pointer group select-none ${scenarios.gradual.isVisible ? 'mb-3' : ''}`}
+                                    onClick={() => toggleVisibility('gradual')}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <TrendingUpIcon className={`w-7 h-7 transition-colors ${scenarios.gradual.isVisible ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                        <h3 className={`font-extrabold text-xl transition-colors ${scenarios.gradual.isVisible ? 'text-slate-800 group-hover:text-emerald-600' : 'text-slate-500 group-hover:text-slate-700'}`}>3. Gradual Increase</h3>
+                                    </div>
+                                    <div className="text-slate-400 group-hover:text-slate-700 p-1.5 rounded-xl group-hover:bg-slate-200 transition-colors" title="Toggle visibility">
+                                        {scenarios.gradual.isVisible ? <EyeIcon className="w-6 h-6" /> : <EyeOffIcon className="w-6 h-6" />}
+                                    </div>
+                                </div>
+                                
+                                {scenarios.gradual.isVisible && (
+                                    <div className="flex flex-col flex-1 animate-in fade-in duration-300">
+                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts small, increases by a set % every year.</p>
+                                        
+                                        <div className="space-y-4 mb-4">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
+                                                    <span className="text-2xl font-extrabold text-emerald-600">{scenarios.gradual.startAge}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" 
+                                                    min="18" 
+                                                    max={retirementAge - 1} 
+                                                    value={scenarios.gradual.startAge} 
+                                                    onChange={e => handleAgeChange('gradual', e.target.value)} 
+                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" 
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <div className="flex items-center gap-1 xl:gap-2">
+                                                        <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-emerald-300' : 'bg-slate-50 border-slate-300 focus-within:border-emerald-500 transition-colors'}`}>
+                                                            <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                            <input 
+                                                                type="number" 
+                                                                value={targetMode ? requiredMonthly.gradual.toFixed(0) : scenarios.gradual.initialMonthly} 
+                                                                onChange={e => updateScenario('gradual', 'initialMonthly', e.target.value)} 
+                                                                disabled={targetMode} 
+                                                                className={`w-14 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-emerald-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center ml-1">
+                                                            <span className="text-slate-400 font-bold text-xl mr-1.5">+</span>
+                                                            <div className="flex flex-col items-end mr-1.5">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase leading-none">Annual</span>
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase leading-none mt-0.5">Increase</span>
+                                                            </div>
+                                                            <div className="flex items-center border-2 border-slate-300 rounded-xl px-2 py-1.5 bg-slate-50 focus-within:border-emerald-500 transition-colors">
+                                                                <input 
+                                                                    type="number" 
+                                                                    value={scenarios.gradual.annualIncreaseRate} 
+                                                                    onChange={e => updateScenario('gradual', 'annualIncreaseRate', e.target.value)} 
+                                                                    className="w-10 text-right outline-none bg-transparent font-bold text-xl text-slate-800" 
+                                                                />
+                                                                <span className="text-slate-500 font-bold text-lg ml-0.5">%</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {targetMode && showSaver && (
+                                                        <div className="text-xs font-bold text-slate-400 mt-1">
+                                                            vs {formatCurrency(requiredMonthlySaver.gradual)} saved
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner space-y-2 mt-auto">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-base font-semibold text-slate-500 mb-0.5">Final Balance</span>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-emerald-600 tracking-tight leading-none">{formatCurrency(summary.balances.gradual)}</div>
+                                                    {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.gradual)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
+                                                <span className="text-base font-medium text-slate-500">Total Invested</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-slate-800">{formatCurrency(summary.totalInvested.gradual)}</div>
+                                                    {targetMode && showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs {formatCurrency(summary.totalInvestedSaver.gradual)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                                <span className="text-base font-bold text-slate-500 mb-0.5">Total Earnings</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-emerald-600 leading-none">+{formatCurrency(summary.balances.gradual - summary.totalInvested.gradual)}</div>
+                                                    {showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs +{formatCurrency(summary.balancesSaver.gradual - summary.totalInvestedSaver.gradual)}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Milestones Card */}
+                            <div className={`flex flex-col bg-white rounded-2xl shadow-md border-t-8 border-x-2 border-b-2 border-x-slate-200 border-b-slate-200 transition-all duration-300 ${scenarios.milestones.isVisible ? 'border-t-purple-500 p-5' : 'border-t-slate-300 p-4 bg-slate-50 opacity-75'}`}>
+                                <div 
+                                    className={`flex items-center justify-between cursor-pointer group select-none ${scenarios.milestones.isVisible ? 'mb-3' : ''}`}
+                                    onClick={() => toggleVisibility('milestones')}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <RocketIcon className={`w-7 h-7 transition-colors ${scenarios.milestones.isVisible ? 'text-purple-500' : 'text-slate-400'}`} />
+                                        <h3 className={`font-extrabold text-xl transition-colors ${scenarios.milestones.isVisible ? 'text-slate-800 group-hover:text-purple-600' : 'text-slate-500 group-hover:text-slate-700'}`}>4. Milestones</h3>
+                                    </div>
+                                    <div className="text-slate-400 group-hover:text-slate-700 p-1.5 rounded-xl group-hover:bg-slate-200 transition-colors" title="Toggle visibility">
+                                        {scenarios.milestones.isVisible ? <EyeIcon className="w-6 h-6" /> : <EyeOffIcon className="w-6 h-6" />}
+                                    </div>
+                                </div>
+                                
+                                {scenarios.milestones.isVisible && (
+                                    <div className="flex flex-col flex-1 animate-in fade-in duration-300">
+                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts small, with realistic contribution bumps at ages 25, 30, 35, & 50.</p>
+                                        
+                                        <div className="space-y-4 mb-4">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
+                                                    <span className="text-2xl font-extrabold text-purple-600">{scenarios.milestones.startAge}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" 
+                                                    min="18" 
+                                                    max={retirementAge - 1} 
+                                                    value={scenarios.milestones.startAge} 
+                                                    onChange={e => handleAgeChange('milestones', e.target.value)} 
+                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600" 
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-purple-300' : 'bg-slate-50 border-slate-300 focus-within:border-purple-500 transition-colors'}`}>
+                                                        <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            value={targetMode ? requiredMonthly.milestones.toFixed(0) : scenarios.milestones.initialMonthly} 
+                                                            onChange={e => updateScenario('milestones', 'initialMonthly', e.target.value)} 
+                                                            disabled={targetMode} 
+                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-purple-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                        />
+                                                    </div>
+                                                    {targetMode && showSaver && (
+                                                        <div className="text-xs font-bold text-slate-400 mt-1">
+                                                            vs {formatCurrency(requiredMonthlySaver.milestones)} saved
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner space-y-2 mt-auto">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-base font-semibold text-slate-500 mb-0.5">Final Balance</span>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-black text-purple-600 tracking-tight leading-none">{formatCurrency(summary.balances.milestones)}</div>
+                                                    {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.milestones)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
+                                                <span className="text-base font-medium text-slate-500">Total Invested</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-slate-800">{formatCurrency(summary.totalInvested.milestones)}</div>
+                                                    {targetMode && showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs {formatCurrency(summary.totalInvestedSaver.milestones)} saved</div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                                <span className="text-base font-bold text-slate-500 mb-0.5">Total Earnings</span>
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-emerald-600 leading-none">+{formatCurrency(summary.balances.milestones - summary.totalInvested.milestones)}</div>
+                                                    {showSaver && <div className="text-xs font-bold text-slate-400 mt-1">vs +{formatCurrency(summary.balancesSaver.milestones - summary.totalInvestedSaver.milestones)}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Expanded Tables Grid */}
+                        {Object.values(scenarios).some(s => s.isVisible) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start mt-4">
+                                {renderTable('smartStudent', '1. Early Starter', 'student', 'studentContrib', 'border-t-blue-500')}
+                                {renderTable('procrastinator', '2. Playing Catch-Up', 'procrastinator', 'procrastinatorContrib', 'border-t-red-500')}
+                                {renderTable('gradual', '3. Gradual Increase', 'gradual', 'gradualContrib', 'border-t-emerald-500')}
+                                {renderTable('milestones', '4. Milestones', 'milestones', 'milestonesContrib', 'border-t-purple-500')}
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+        }
+
+        // Initialize App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
