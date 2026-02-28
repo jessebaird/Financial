@@ -29,11 +29,9 @@
         const ClockIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
         const TargetIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>;
         const RocketIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>;
-        const SettingsIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>;
         const EyeIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
         const EyeOffIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>;
-        const AlertCircleIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
-        const ShieldCheckIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+        const RotateCcwIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
 
         const getMilestoneMultiplier = (age) => {
             let m = 1;
@@ -44,36 +42,92 @@
             return m;
         };
 
+        const DEFAULT_SCENARIOS = {
+            smartStudent: { isVisible: true, startAge: 18, initialMonthly: 100 },
+            procrastinator: { isVisible: true, startAge: 40, initialMonthly: 880 },
+            gradual: { isVisible: true, startAge: 18, initialMonthly: 15, annualIncreaseRate: 12 },
+            milestones: { isVisible: true, startAge: 18, initialMonthly: 7 }
+        };
+
         function App() {
+            // URL Parameter Helpers
+            const searchParams = new URLSearchParams(window.location.search);
+            const parseBool = (val, defaultVal) => val !== null ? val === 'true' : defaultVal;
+            const parseNum = (val, defaultVal) => val !== null && !isNaN(Number(val)) ? Number(val) : defaultVal;
+            const parseJson = (val, defaultVal) => {
+                if(!val) return defaultVal;
+                try { return JSON.parse(decodeURIComponent(val)); } catch(e) { return defaultVal; }
+            };
+
             // Global settings
-            const [returnRate, setReturnRate] = useState(10);
-            const [retirementAge, setRetirementAge] = useState(65);
-            const [useInflation, setUseInflation] = useState(false);
-            const [inflationRate, setInflationRate] = useState(3);
-            const [linkAges, setLinkAges] = useState(false);
+            const [returnRate, setReturnRate] = useState(parseNum(searchParams.get('rr'), 10));
+            const [retirementAge, setRetirementAge] = useState(parseNum(searchParams.get('ra'), 65));
+            const [useInflation, setUseInflation] = useState(parseBool(searchParams.get('inf'), false));
+            const [inflationRate, setInflationRate] = useState(parseNum(searchParams.get('ir'), 3));
+            const [linkAges, setLinkAges] = useState(parseBool(searchParams.get('la'), false));
             
             // Target Mode settings
-            const [targetMode, setTargetMode] = useState(false);
-            const [targetAmount, setTargetAmount] = useState(1000000);
+            const [targetMode, setTargetMode] = useState(parseBool(searchParams.get('tm'), false));
+            const [targetAmount, setTargetAmount] = useState(parseNum(searchParams.get('ta'), 1000000));
 
             // Saver Mode
-            const [showSaver, setShowSaver] = useState(false);
+            const [showSaver, setShowSaver] = useState(parseBool(searchParams.get('ss'), false));
+            const [savingsRate, setSavingsRate] = useState(parseNum(searchParams.get('sr'), 4));
             
-            // Scenario Configurations (Defaulting to just the first one visible for a better presentation flow)
-            const [scenarios, setScenarios] = useState({
-                smartStudent: { isVisible: true, startAge: 18, initialMonthly: 120 },
-                procrastinator: { isVisible: false, startAge: 40, initialMonthly: 1100 },
-                gradual: { isVisible: false, startAge: 18, initialMonthly: 20, annualIncreaseRate: 12 },
-                milestones: { isVisible: false, startAge: 18, initialMonthly: 20 }
-            });
+            // Fee Mode
+            const [useFees, setUseFees] = useState(parseBool(searchParams.get('uf'), false));
+            const [feeRate, setFeeRate] = useState(parseNum(searchParams.get('fr'), 0.5));
+
+            // Scenario Configurations
+            const [scenarios, setScenarios] = useState(parseJson(searchParams.get('scen'), DEFAULT_SCENARIOS));
 
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
 
+            // Sync state to URL seamlessly
+            useEffect(() => {
+                const params = new URLSearchParams();
+                params.set('rr', returnRate);
+                params.set('ra', retirementAge);
+                params.set('inf', useInflation);
+                params.set('ir', inflationRate);
+                params.set('la', linkAges);
+                params.set('tm', targetMode);
+                params.set('ta', targetAmount);
+                params.set('ss', showSaver);
+                params.set('sr', savingsRate);
+                params.set('uf', useFees);
+                params.set('fr', feeRate);
+                params.set('scen', encodeURIComponent(JSON.stringify(scenarios)));
+                
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                window.history.replaceState({}, '', newUrl);
+            }, [returnRate, retirementAge, useInflation, inflationRate, linkAges, targetMode, targetAmount, showSaver, savingsRate, useFees, feeRate, scenarios]);
+
+            // Reset Function
+            const resetToDefaults = () => {
+                setReturnRate(10);
+                setRetirementAge(65);
+                setUseInflation(false);
+                setInflationRate(3);
+                setLinkAges(false);
+                setTargetMode(false);
+                setTargetAmount(1000000);
+                setShowSaver(false);
+                setSavingsRate(4);
+                setUseFees(false);
+                setFeeRate(0.5);
+                setScenarios(DEFAULT_SCENARIOS);
+                
+                // Clear URL params visually on reset
+                window.history.replaceState({}, '', window.location.pathname);
+            };
+
             // Generate the dataset year by year
             const { data, summary, catchUpMonthly, requiredMonthly, requiredMonthlySaver } = useMemo(() => {
-                const rate = returnRate / 100;
-                const saverRate = 0.04; // Fixed 4% for the savings comparison
+                const grossRate = returnRate / 100;
+                const netRate = grossRate - (useFees ? feeRate / 100 : 0);
+                const saverRate = savingsRate / 100; // Fees generally don't apply to savings accounts
                 const infRate = useInflation ? (inflationRate / 100) : 0;
                 const finalDiscount = Math.pow(1 + infRate, retirementAge - 18);
 
@@ -89,6 +143,7 @@
 
                 if (targetMode && targetAmount > 0) {
                     // Calculate "multipliers" (final balances if starting contribution is $1)
+                    // We use the netRate here so the Target Amount is hit AFTER fees are taken.
                     let b1 = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
                     let cm1 = { student: 1, procrastinator: 1, gradual: 1, milestones: 1 };
                     
@@ -96,19 +151,19 @@
                     let cm1Saver = { student: 1, procrastinator: 1, gradual: 1, milestones: 1 };
                     
                     for (let age = 18; age <= retirementAge; age++) {
-                        // Invested Multipliers
+                        // Invested Multipliers (Net of Fees)
                         if (age >= scenarios.smartStudent.startAge) {
-                            b1.student = b1.student * (1 + rate) + cm1.student * 12;
+                            b1.student = b1.student * (1 + netRate) + cm1.student * 12;
                         }
                         if (age >= scenarios.procrastinator.startAge) {
-                            b1.procrastinator = b1.procrastinator * (1 + rate) + cm1.procrastinator * 12;
+                            b1.procrastinator = b1.procrastinator * (1 + netRate) + cm1.procrastinator * 12;
                         }
                         if (age >= scenarios.gradual.startAge) {
-                            b1.gradual = b1.gradual * (1 + rate) + cm1.gradual * 12;
+                            b1.gradual = b1.gradual * (1 + netRate) + cm1.gradual * 12;
                             cm1.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
                         }
                         if (age >= scenarios.milestones.startAge) {
-                            b1.milestones = b1.milestones * (1 + rate) + getMilestoneMultiplier(age) * 12;
+                            b1.milestones = b1.milestones * (1 + netRate) + getMilestoneMultiplier(age) * 12;
                         }
                         
                         // Saver Multipliers
@@ -157,6 +212,7 @@
                 // Second pass: Calculate actual chart data
                 let chartData = [];
                 let balances = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                let grossBalances = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
                 let balancesSaver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
                 let totalInvested = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
                 let totalInvestedSaver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
@@ -186,7 +242,8 @@
                         sContrib = currentMonthly.student * 12;
                         sContribSaver = currentMonthlySaver.student * 12;
                         
-                        balances.student = balances.student * (1 + rate) + sContrib;
+                        grossBalances.student = grossBalances.student * (1 + grossRate) + sContrib;
+                        balances.student = balances.student * (1 + netRate) + sContrib;
                         balancesSaver.student = balancesSaver.student * (1 + saverRate) + sContribSaver;
                         
                         totalInvested.student += sContrib;
@@ -194,7 +251,7 @@
                     }
                     row.student = balances.student / discount;
                     row.studentSaver = balancesSaver.student / discount;
-                    row.studentInvested = totalInvested.student / discount;
+                    row.studentInvested = totalInvested.student; // Locked to nominal out-of-pocket cash
                     row.studentContrib = sContrib; // Keep nominal for display
 
                     // 2. The Procrastinator / Catch-Up
@@ -202,7 +259,8 @@
                         pContrib = currentMonthly.procrastinator * 12;
                         pContribSaver = currentMonthlySaver.procrastinator * 12;
                         
-                        balances.procrastinator = balances.procrastinator * (1 + rate) + pContrib;
+                        grossBalances.procrastinator = grossBalances.procrastinator * (1 + grossRate) + pContrib;
+                        balances.procrastinator = balances.procrastinator * (1 + netRate) + pContrib;
                         balancesSaver.procrastinator = balancesSaver.procrastinator * (1 + saverRate) + pContribSaver;
                         
                         totalInvested.procrastinator += pContrib;
@@ -210,7 +268,7 @@
                     }
                     row.procrastinator = balances.procrastinator / discount;
                     row.procrastinatorSaver = balancesSaver.procrastinator / discount;
-                    row.procrastinatorInvested = totalInvested.procrastinator / discount;
+                    row.procrastinatorInvested = totalInvested.procrastinator; // Locked to nominal out-of-pocket cash
                     row.procrastinatorContrib = pContrib;
 
                     // 3. Gradual Increase
@@ -218,7 +276,8 @@
                         gContrib = currentMonthly.gradual * 12;
                         gContribSaver = currentMonthlySaver.gradual * 12;
                         
-                        balances.gradual = balances.gradual * (1 + rate) + gContrib;
+                        grossBalances.gradual = grossBalances.gradual * (1 + grossRate) + gContrib;
+                        balances.gradual = balances.gradual * (1 + netRate) + gContrib;
                         balancesSaver.gradual = balancesSaver.gradual * (1 + saverRate) + gContribSaver;
                         
                         totalInvested.gradual += gContrib;
@@ -229,7 +288,7 @@
                     }
                     row.gradual = balances.gradual / discount;
                     row.gradualSaver = balancesSaver.gradual / discount;
-                    row.gradualInvested = totalInvested.gradual / discount;
+                    row.gradualInvested = totalInvested.gradual; // Locked to nominal out-of-pocket cash
                     row.gradualContrib = gContrib;
 
                     // 4. Milestones
@@ -238,7 +297,8 @@
                         mContrib = milestoneBase * mMult * 12;
                         mContribSaver = milestoneBaseSaver * mMult * 12;
                         
-                        balances.milestones = balances.milestones * (1 + rate) + mContrib;
+                        grossBalances.milestones = grossBalances.milestones * (1 + grossRate) + mContrib;
+                        balances.milestones = balances.milestones * (1 + netRate) + mContrib;
                         balancesSaver.milestones = balancesSaver.milestones * (1 + saverRate) + mContribSaver;
                         
                         totalInvested.milestones += mContrib;
@@ -246,7 +306,7 @@
                     }
                     row.milestones = balances.milestones / discount;
                     row.milestonesSaver = balancesSaver.milestones / discount;
-                    row.milestonesInvested = totalInvested.milestones / discount;
+                    row.milestonesInvested = totalInvested.milestones; // Locked to nominal out-of-pocket cash
                     row.milestonesContrib = mContrib;
 
                     chartData.push(row);
@@ -265,26 +325,32 @@
                     gradual: balancesSaver.gradual / finalDiscount,
                     milestones: balancesSaver.milestones / finalDiscount
                 };
+                const finalLostToFees = {
+                    student: (grossBalances.student - balances.student) / finalDiscount,
+                    procrastinator: (grossBalances.procrastinator - balances.procrastinator) / finalDiscount,
+                    gradual: (grossBalances.gradual - balances.gradual) / finalDiscount,
+                    milestones: (grossBalances.milestones - balances.milestones) / finalDiscount,
+                };
                 const finalInvested = {
-                    student: totalInvested.student / finalDiscount,
-                    procrastinator: totalInvested.procrastinator / finalDiscount,
-                    gradual: totalInvested.gradual / finalDiscount,
-                    milestones: totalInvested.milestones / finalDiscount
+                    student: totalInvested.student,
+                    procrastinator: totalInvested.procrastinator,
+                    gradual: totalInvested.gradual,
+                    milestones: totalInvested.milestones
                 };
                 const finalInvestedSaver = {
-                    student: totalInvestedSaver.student / finalDiscount,
-                    procrastinator: totalInvestedSaver.procrastinator / finalDiscount,
-                    gradual: totalInvestedSaver.gradual / finalDiscount,
-                    milestones: totalInvestedSaver.milestones / finalDiscount
+                    student: totalInvestedSaver.student,
+                    procrastinator: totalInvestedSaver.procrastinator,
+                    gradual: totalInvestedSaver.gradual,
+                    milestones: totalInvestedSaver.milestones
                 };
 
                 // Calculate Cost of Waiting (how much Procrastinator needs to match Early Starter)
                 let requiredCatchUp = 0;
                 const n = retirementAge - scenarios.procrastinator.startAge + 1; // +1 mathematically required to account for inclusive compounding years
-                if (n > 0 && rate > 0) {
+                if (n > 0 && netRate > 0) {
                     const target = finalBalances.student;
                     // PMT = FV * r / ((1+r)^n - 1)
-                    requiredCatchUp = (target * rate) / (Math.pow(1 + rate, n) - 1) / 12;
+                    requiredCatchUp = (target * netRate) / (Math.pow(1 + netRate, n) - 1) / 12;
                 }
 
                 return { 
@@ -292,6 +358,7 @@
                     summary: { 
                         balances: finalBalances, 
                         balancesSaver: finalBalancesSaver, 
+                        lostToFees: finalLostToFees,
                         totalInvested: finalInvested,
                         totalInvestedSaver: finalInvestedSaver 
                     },
@@ -305,7 +372,7 @@
                         milestones: reqMonthlySaver.milestones * getMilestoneMultiplier(scenarios.milestones.startAge)
                     }
                 };
-            }, [returnRate, retirementAge, scenarios, useInflation, inflationRate, targetMode, targetAmount]);
+            }, [returnRate, retirementAge, scenarios, useInflation, inflationRate, targetMode, targetAmount, savingsRate, useFees, feeRate]);
 
             const formatCurrency = (value) => {
                 return new Intl.NumberFormat('en-US', {
@@ -339,6 +406,21 @@
 
             const toggleVisibility = (key) => {
                 updateScenario(key, 'isVisible', !scenarios[key].isVisible);
+            };
+            
+            // Toggle target mode, and lock in the math if turning off
+            const handleTargetModeToggle = (e) => {
+                e.stopPropagation();
+                if (targetMode) {
+                    setScenarios(prev => ({
+                        ...prev,
+                        smartStudent: { ...prev.smartStudent, initialMonthly: Math.round(requiredMonthly.student) },
+                        procrastinator: { ...prev.procrastinator, initialMonthly: Math.round(requiredMonthly.procrastinator) },
+                        gradual: { ...prev.gradual, initialMonthly: Math.round(requiredMonthly.gradual) },
+                        milestones: { ...prev.milestones, initialMonthly: Math.round(requiredMonthly.milestones) }
+                    }));
+                }
+                setTargetMode(!targetMode);
             };
 
             // Manage Chart.js instance
@@ -404,11 +486,7 @@
                                     const age = data[context.dataIndex]?.age;
                                     return [25, 30, 35, 50].includes(age) ? 8 : 0;
                                 },
-                                pointBackgroundColor: function(context) {
-                                    if (context.dataIndex === undefined) return '#8b5cf6';
-                                    const age = data[context.dataIndex]?.age;
-                                    return [25, 30, 35, 50].includes(age) ? '#fef08a' : '#8b5cf6';
-                                },
+                                pointBackgroundColor: '#8b5cf6',
                                 pointBorderColor: '#8b5cf6',
                                 pointBorderWidth: 2,
                                 pointHoverRadius: 10,
@@ -416,7 +494,7 @@
                             },
                             // 2. Savings Datasets (Rendered under main lines if toggled on)
                             {
-                                label: 'Early Starter (4% Saved)',
+                                label: `Early Starter (${savingsRate}% Saved)`,
                                 data: data.map(d => d.studentSaver),
                                 investedData: data.map(d => targetMode ? d.studentInvested : d.studentInvested), // Reused logic handles both
                                 hidden: !scenarios.smartStudent.isVisible || !showSaver,
@@ -428,7 +506,7 @@
                                 tension: 0.1
                             },
                             {
-                                label: 'Playing Catch-Up (4% Saved)',
+                                label: `Playing Catch-Up (${savingsRate}% Saved)`,
                                 data: data.map(d => d.procrastinatorSaver),
                                 investedData: data.map(d => d.procrastinatorInvested),
                                 hidden: !scenarios.procrastinator.isVisible || !showSaver,
@@ -440,7 +518,7 @@
                                 tension: 0.1
                             },
                             {
-                                label: 'Gradual Increase (4% Saved)',
+                                label: `Gradual Increase (${savingsRate}% Saved)`,
                                 data: data.map(d => d.gradualSaver),
                                 investedData: data.map(d => d.gradualInvested),
                                 hidden: !scenarios.gradual.isVisible || !showSaver,
@@ -452,7 +530,7 @@
                                 tension: 0.1
                             },
                             {
-                                label: 'Big Milestones (4% Saved)',
+                                label: `Big Milestones (${savingsRate}% Saved)`,
                                 data: data.map(d => d.milestonesSaver),
                                 investedData: data.map(d => d.milestonesInvested),
                                 hidden: !scenarios.milestones.isVisible || !showSaver,
@@ -489,17 +567,6 @@
                                     },
                                     label: function(context) {
                                         return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
-                                    },
-                                    afterLabel: function(context) {
-                                        // Use Target Mode specific invested data if showing saver line 
-                                        const isSaverLine = context.dataset.label.includes('Saved');
-                                        const invested = isSaverLine && targetMode 
-                                            ? data[context.dataIndex][context.dataset.dataKey.replace('Saver', 'Invested') + 'Saver'] || context.dataset.investedData[context.dataIndex]
-                                            : context.dataset.investedData[context.dataIndex];
-                                            
-                                        const val = context.parsed.y;
-                                        const earnings = val - invested;
-                                        return `   Invested: ${formatCurrency(invested)} | Earnings: ${formatCurrency(earnings)}`;
                                     }
                                 }
                             },
@@ -546,7 +613,7 @@
                         chartInstance.current.destroy();
                     }
                 };
-            }, [data, scenarios, showSaver, targetMode]);
+            }, [data, scenarios, showSaver, targetMode, savingsRate, useFees]);
 
             const renderTable = (scenarioKey, title, dataKey, contribKey, borderClass) => {
                 // Ensure table only renders if the scenario is visible
@@ -594,104 +661,84 @@
                 <div className="min-h-screen relative bg-slate-50">
                     
                     {/* Sticky Header & Controls */}
-                    <div className="sticky top-0 z-50 pt-2 md:pt-4 pb-2 md:pb-4 px-2 md:px-4 bg-slate-50/95 backdrop-blur-md shadow-sm border-b border-slate-200">
-                        <div className="max-w-[2000px] mx-auto flex flex-col xl:flex-row xl:items-center justify-between bg-white p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 gap-4">
+                    <div className="sticky top-0 z-50 pt-2 md:pt-4 pb-2 md:pb-3 px-2 md:px-4 bg-slate-50/95 backdrop-blur-md shadow-sm border-b border-slate-200">
+                        <div className="max-w-[2000px] mx-auto flex flex-col 2xl:flex-row 2xl:items-center justify-between bg-white p-2.5 md:p-3 rounded-2xl shadow-sm border-2 border-slate-200 gap-3">
                             
                             {/* Left: Title */}
-                            <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center gap-3 shrink-0 px-1">
                                 <TrendingUpIcon className="text-blue-600 w-8 h-8 md:w-10 md:h-10" />
                                 <div>
-                                    <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Time in the Market</h1>
-                                    <p className="text-slate-500 text-sm md:text-base font-bold mt-1">Interactive visualization</p>
+                                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight leading-none">Time in the Market</h1>
+                                    <p className="text-slate-500 text-xs md:text-sm font-bold mt-0.5">Interactive visualization</p>
                                 </div>
                             </div>
                             
-                            {/* Right: Controls Grid */}
-                            <div className="flex flex-wrap gap-2 md:gap-3 items-center w-full xl:w-auto xl:justify-end">
+                            {/* Right: Compact Controls Grid */}
+                            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center w-full 2xl:w-auto 2xl:justify-end">
                                 
                                 {/* Link Ages Toggle */}
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setLinkAges(!linkAges)}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={linkAges}
-                                        readOnly
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
-                                    />
-                                    <span className="text-sm md:text-base font-bold cursor-pointer text-slate-700 select-none whitespace-nowrap pointer-events-none">Link Start Ages</span>
+                                <div className="flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setLinkAges(!linkAges)}>
+                                    <input type="checkbox" checked={linkAges} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 rounded cursor-pointer shrink-0 pointer-events-none" />
+                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-slate-700 select-none whitespace-nowrap pointer-events-none">Link Start Ages</span>
                                 </div>
                             
-                                {/* Combined Target Mode Toggle & Input */}
-                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer hover:bg-slate-50 ${targetMode ? 'bg-white border-blue-400 ring-2 ring-blue-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setTargetMode(!targetMode)}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={targetMode}
-                                        readOnly
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
-                                    />
-                                    <span className="text-sm md:text-base font-bold cursor-pointer text-blue-700 select-none whitespace-nowrap pointer-events-none">Target Mode</span>
-                                    
-                                    <div className={`flex items-center ml-1 pl-2 border-l-2 transition-colors ${targetMode ? 'border-blue-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                        <span className={`font-bold text-lg mr-1 transition-colors ${targetMode ? 'text-blue-700' : 'text-slate-400'}`}>$</span>
-                                        <input 
-                                            type="text" 
-                                            value={targetAmount ? targetAmount.toLocaleString('en-US') : ''}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/[^0-9]/g, '');
-                                                setTargetAmount(Number(val));
-                                            }}
-                                            disabled={!targetMode}
-                                            className={`w-28 text-right outline-none font-extrabold text-lg bg-transparent transition-colors ${targetMode ? 'text-blue-800' : 'text-slate-400 cursor-not-allowed'}`}
-                                        />
+                                {/* Target Mode */}
+                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${targetMode ? 'bg-white border-blue-400 ring-1 ring-blue-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={handleTargetModeToggle}>
+                                    <input type="checkbox" checked={targetMode} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 rounded cursor-pointer shrink-0 pointer-events-none" />
+                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-blue-700 select-none whitespace-nowrap pointer-events-none">Target Mode</span>
+                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${targetMode ? 'border-blue-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                        <span className={`font-bold text-sm lg:text-base mr-0.5 transition-colors ${targetMode ? 'text-blue-700' : 'text-slate-400'}`}>$</span>
+                                        <input type="text" value={targetAmount ? targetAmount.toLocaleString('en-US') : ''} onChange={(e) => setTargetAmount(Number(e.target.value.replace(/[^0-9]/g, '')))} disabled={!targetMode} className={`w-20 lg:w-24 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${targetMode ? 'text-blue-800' : 'text-slate-400 cursor-not-allowed'}`} />
                                     </div>
                                 </div>
 
-                                {/* Show Saver Toggle */}
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setShowSaver(!showSaver)}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={showSaver}
-                                        readOnly
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
-                                    />
-                                    <span className="text-sm md:text-base font-bold cursor-pointer text-indigo-700 select-none flex items-center gap-1 whitespace-nowrap pointer-events-none">
-                                        <ShieldCheckIcon className="w-4 h-4"/>Compare to 4% Savings
-                                    </span>
+                                {/* Saver Mode */}
+                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${showSaver ? 'bg-white border-indigo-400 ring-1 ring-indigo-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setShowSaver(!showSaver)}>
+                                    <input type="checkbox" checked={showSaver} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-indigo-600 rounded cursor-pointer shrink-0 pointer-events-none" />
+                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-indigo-700 select-none whitespace-nowrap pointer-events-none">Compare to Savings</span>
+                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${showSaver ? 'border-indigo-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.01" value={savingsRate} onChange={(e) => setSavingsRate(Number(e.target.value))} disabled={!showSaver} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${showSaver ? 'text-indigo-800' : 'text-slate-400 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${showSaver ? 'text-indigo-700' : 'text-slate-400'}`}>%</span>
+                                    </div>
                                 </div>
 
-                                {/* Inflation Toggle */}
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setUseInflation(!useInflation)}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={useInflation}
-                                        readOnly
-                                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0 pointer-events-none"
-                                    />
-                                    <span className="text-sm md:text-base font-bold cursor-pointer text-amber-700 select-none whitespace-nowrap pointer-events-none">
-                                        Adjust for Inflation ({inflationRate}%)
-                                    </span>
+                                {/* Inflation */}
+                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${useInflation ? 'bg-white border-amber-400 ring-1 ring-amber-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setUseInflation(!useInflation)}>
+                                    <input type="checkbox" checked={useInflation} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-600 rounded cursor-pointer shrink-0 pointer-events-none" />
+                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-amber-700 select-none whitespace-nowrap pointer-events-none">Inflation</span>
+                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${useInflation ? 'border-amber-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.01" value={inflationRate} onChange={(e) => setInflationRate(Number(e.target.value))} disabled={!useInflation} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${useInflation ? 'text-amber-800' : 'text-slate-400 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${useInflation ? 'text-amber-700' : 'text-slate-400'}`}>%</span>
+                                    </div>
+                                </div>
+
+                                {/* Mgmt Fee */}
+                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${useFees ? 'bg-white border-rose-400 ring-1 ring-rose-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setUseFees(!useFees)}>
+                                    <input type="checkbox" checked={useFees} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-rose-600 rounded cursor-pointer shrink-0 pointer-events-none" />
+                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-rose-700 select-none whitespace-nowrap pointer-events-none">Mgmt Fee</span>
+                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${useFees ? 'border-rose-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.01" value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} disabled={!useFees} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${useFees ? 'text-rose-800' : 'text-slate-400 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${useFees ? 'text-rose-700' : 'text-slate-400'}`}>%</span>
+                                    </div>
                                 </div>
                                 
                                 {/* Return Input */}
-                                <div className="flex items-center px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 focus-within:border-blue-500 transition-colors">
-                                    <label className="text-sm md:text-base font-bold text-slate-700 mr-2 whitespace-nowrap">Return</label>
-                                    <input 
-                                        type="number" 
-                                        value={returnRate}
-                                        onChange={(e) => setReturnRate(Number(e.target.value))}
-                                        className="w-12 text-right outline-none font-bold text-lg text-slate-800 bg-transparent"
-                                    />
-                                    <span className="text-slate-500 font-bold text-lg ml-1">%</span>
+                                <div className="flex items-center px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 focus-within:border-blue-500 transition-colors">
+                                    <label className="text-xs lg:text-sm font-bold text-slate-700 mr-1.5 whitespace-nowrap">Return</label>
+                                    <input type="number" step="0.01" value={returnRate} onChange={(e) => setReturnRate(Number(e.target.value))} className="w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base text-slate-800 bg-transparent" />
+                                    <span className="text-slate-500 font-bold text-sm lg:text-base ml-0.5">%</span>
                                 </div>
 
                                 {/* Target Age Input */}
-                                <div className="flex items-center px-3 py-1.5 rounded-lg bg-white shadow-sm border-2 border-slate-200 focus-within:border-blue-500 transition-colors">
-                                    <label className="text-sm md:text-base font-bold text-slate-700 mr-2 whitespace-nowrap">Target Age</label>
-                                    <input 
-                                        type="number" 
-                                        value={retirementAge}
-                                        onChange={(e) => setRetirementAge(Number(e.target.value))}
-                                        className="w-14 text-right outline-none font-bold text-lg text-slate-800 bg-transparent"
-                                    />
+                                <div className="flex items-center px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 focus-within:border-blue-500 transition-colors">
+                                    <label className="text-xs lg:text-sm font-bold text-slate-700 mr-1.5 whitespace-nowrap">Target Age</label>
+                                    <input type="number" value={retirementAge} onChange={(e) => setRetirementAge(Number(e.target.value))} className="w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base text-slate-800 bg-transparent" />
+                                </div>
+
+                                {/* Reset Button */}
+                                <div className="flex items-center gap-1 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-slate-100 shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors ml-auto 2xl:ml-2" onClick={resetToDefaults} title="Reset to Defaults">
+                                    <RotateCcwIcon className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600 shrink-0" />
+                                    <span className="text-xs lg:text-sm font-bold text-slate-700 select-none whitespace-nowrap">Reset</span>
                                 </div>
                             </div>
                         </div>
@@ -716,17 +763,15 @@
                                             <span className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-500 shadow-sm border border-slate-200"></span>3. Gradual Increase
                                         </div>
                                         <div className={`flex items-center gap-2 cursor-pointer transition-all hover:opacity-80 ${!scenarios.milestones.isVisible ? 'opacity-30 grayscale' : ''}`} onClick={() => toggleVisibility('milestones')}>
-                                            <span className="relative flex items-center justify-center w-4 h-4 md:w-5 md:h-5 rounded-full bg-purple-500 shadow-sm border border-slate-200">
-                                                <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-yellow-300"></span>
-                                            </span>
+                                            <span className="relative flex items-center justify-center w-4 h-4 md:w-5 md:h-5 rounded-full bg-purple-500 shadow-sm border border-slate-200"></span>
                                             4. Big Milestones
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end gap-1 mt-2 md:mt-0">
+                                <div className="flex flex-col items-end gap-1 mt-2 md:mt-0 text-right">
                                     {useInflation && <span className="text-sm md:text-base font-bold px-3 py-1 bg-amber-100 text-amber-900 rounded-full border border-amber-200 shadow-sm whitespace-nowrap">Viewing in Today's Dollars</span>}
-                                    {showSaver && <span className="text-xs md:text-sm font-bold text-slate-400">Dashed lines = 4% Savings</span>}
+                                    {showSaver && <span className="text-xs md:text-sm font-bold text-slate-400">Dashed lines = {savingsRate}% Savings</span>}
                                 </div>
                             </div>
                             <div className="h-[350px] md:h-[400px] w-full relative">
@@ -774,7 +819,10 @@
                                             <div className="flex justify-between items-start">
                                                 <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
                                                 <div className="flex flex-col items-end">
-                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-blue-300' : 'bg-slate-50 border-slate-300 focus-within:border-blue-500 transition-colors'}`}>
+                                                    <div 
+                                                        className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-blue-300' : 'bg-slate-50 border-slate-300 focus-within:border-blue-500 transition-colors'}`}
+                                                        title={targetMode ? `Exact amount required: $${requiredMonthly.student}` : ''}
+                                                    >
                                                         <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                         <input 
                                                             type="number" 
@@ -801,6 +849,14 @@
                                                     {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.student)} saved</div>}
                                                 </div>
                                             </div>
+                                            {useFees && (
+                                                <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 mt-2">
+                                                    <span className="text-sm font-bold text-slate-500 mb-0.5">Lost to Fees</span>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-bold text-rose-500 leading-none">-{formatCurrency(summary.lostToFees.student)}</div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
                                                 <span className="text-base font-medium text-slate-500">Total Invested</span>
                                                 <div className="text-right">
@@ -857,7 +913,10 @@
                                             <div className="flex justify-between items-start">
                                                 <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
                                                 <div className="flex flex-col items-end">
-                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-red-300' : 'bg-slate-50 border-slate-300 focus-within:border-red-500 transition-colors'}`}>
+                                                    <div 
+                                                        className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-red-300' : 'bg-slate-50 border-slate-300 focus-within:border-red-500 transition-colors'}`}
+                                                        title={targetMode ? `Exact amount required: $${requiredMonthly.procrastinator}` : ''}
+                                                    >
                                                         <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                         <input 
                                                             type="number" 
@@ -884,6 +943,14 @@
                                                     {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.procrastinator)} saved</div>}
                                                 </div>
                                             </div>
+                                            {useFees && (
+                                                <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 mt-2">
+                                                    <span className="text-sm font-bold text-slate-500 mb-0.5">Lost to Fees</span>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-bold text-rose-500 leading-none">-{formatCurrency(summary.lostToFees.procrastinator)}</div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
                                                 <span className="text-base font-medium text-slate-500">Total Invested</span>
                                                 <div className="text-right">
@@ -941,7 +1008,10 @@
                                                 <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
                                                 <div className="flex flex-col items-end">
                                                     <div className="flex items-center gap-1 xl:gap-2">
-                                                        <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-emerald-300' : 'bg-slate-50 border-slate-300 focus-within:border-emerald-500 transition-colors'}`}>
+                                                        <div 
+                                                            className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-emerald-300' : 'bg-slate-50 border-slate-300 focus-within:border-emerald-500 transition-colors'}`}
+                                                            title={targetMode ? `Exact amount required: $${requiredMonthly.gradual}` : ''}
+                                                        >
                                                             <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                             <input 
                                                                 type="number" 
@@ -985,6 +1055,14 @@
                                                     {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.gradual)} saved</div>}
                                                 </div>
                                             </div>
+                                            {useFees && (
+                                                <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 mt-2">
+                                                    <span className="text-sm font-bold text-slate-500 mb-0.5">Lost to Fees</span>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-bold text-rose-500 leading-none">-{formatCurrency(summary.lostToFees.gradual)}</div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
                                                 <span className="text-base font-medium text-slate-500">Total Invested</span>
                                                 <div className="text-right">
@@ -1041,7 +1119,10 @@
                                             <div className="flex justify-between items-start">
                                                 <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
                                                 <div className="flex flex-col items-end">
-                                                    <div className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-purple-300' : 'bg-slate-50 border-slate-300 focus-within:border-purple-500 transition-colors'}`}>
+                                                    <div 
+                                                        className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-purple-300' : 'bg-slate-50 border-slate-300 focus-within:border-purple-500 transition-colors'}`}
+                                                        title={targetMode ? `Exact amount required: $${requiredMonthly.milestones}` : ''}
+                                                    >
                                                         <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                         <input 
                                                             type="number" 
@@ -1068,6 +1149,14 @@
                                                     {!targetMode && showSaver && <div className="text-sm font-bold text-slate-400 mt-1">vs {formatCurrency(summary.balancesSaver.milestones)} saved</div>}
                                                 </div>
                                             </div>
+                                            {useFees && (
+                                                <div className="flex justify-between items-end pt-2 border-t border-slate-200/60 mt-2">
+                                                    <span className="text-sm font-bold text-slate-500 mb-0.5">Lost to Fees</span>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-bold text-rose-500 leading-none">-{formatCurrency(summary.lostToFees.milestones)}</div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between items-end pt-2 border-t-2 border-slate-200 mt-2">
                                                 <span className="text-base font-medium text-slate-500">Total Invested</span>
                                                 <div className="text-right">
