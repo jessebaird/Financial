@@ -49,60 +49,67 @@
             milestones: { isVisible: true, startAge: 18, initialMonthly: 7 }
         };
 
-        function App() {
-            // URL Parameter Helpers
-            const searchParams = new URLSearchParams(window.location.search);
-            const parseBool = (val, defaultVal) => val !== null ? val === 'true' : defaultVal;
-            const parseNum = (val, defaultVal) => val !== null && !isNaN(Number(val)) ? Number(val) : defaultVal;
-            const parseJson = (val, defaultVal) => {
-                if(!val) return defaultVal;
-                try { return JSON.parse(decodeURIComponent(val)); } catch(e) { return defaultVal; }
-            };
+        // Helper to retrieve data from localStorage safely
+        const getStoredVal = (key, defaultVal, isJson = false) => {
+            try {
+                const item = localStorage.getItem(`marketExplorer_${key}`);
+                if (item === null) return defaultVal;
+                if (isJson) return JSON.parse(item);
+                if (typeof defaultVal === 'boolean') return item === 'true';
+                if (typeof defaultVal === 'number') return Number(item);
+                return item;
+            } catch (e) {
+                return defaultVal;
+            }
+        };
 
+        function App() {
             // Global settings
-            const [returnRate, setReturnRate] = useState(parseNum(searchParams.get('rr'), 10));
-            const [retirementAge, setRetirementAge] = useState(parseNum(searchParams.get('ra'), 65));
-            const [useInflation, setUseInflation] = useState(parseBool(searchParams.get('inf'), false));
-            const [inflationRate, setInflationRate] = useState(parseNum(searchParams.get('ir'), 3));
-            const [linkAges, setLinkAges] = useState(parseBool(searchParams.get('la'), false));
+            const [returnRate, setReturnRate] = useState(() => getStoredVal('rr', 10));
+            const [retirementAge, setRetirementAge] = useState(() => getStoredVal('ra', 65));
+            const [useInflation, setUseInflation] = useState(() => getStoredVal('inf', false));
+            const [inflationRate, setInflationRate] = useState(() => getStoredVal('ir', 3));
+            const [linkAges, setLinkAges] = useState(() => getStoredVal('la', false));
             
             // Target Mode settings
-            const [targetMode, setTargetMode] = useState(parseBool(searchParams.get('tm'), false));
-            const [targetAmount, setTargetAmount] = useState(parseNum(searchParams.get('ta'), 1000000));
+            const [targetMode, setTargetMode] = useState(() => getStoredVal('tm', false));
+            const [targetAmount, setTargetAmount] = useState(() => getStoredVal('ta', 1000000));
 
             // Saver Mode
-            const [showSaver, setShowSaver] = useState(parseBool(searchParams.get('ss'), false));
-            const [savingsRate, setSavingsRate] = useState(parseNum(searchParams.get('sr'), 4));
+            const [showSaver, setShowSaver] = useState(() => getStoredVal('ss', false));
+            const [savingsRate, setSavingsRate] = useState(() => getStoredVal('sr', 4));
             
             // Fee Mode
-            const [useFees, setUseFees] = useState(parseBool(searchParams.get('uf'), false));
-            const [feeRate, setFeeRate] = useState(parseNum(searchParams.get('fr'), 0.5));
+            const [useFees, setUseFees] = useState(() => getStoredVal('uf', false));
+            const [feeRate, setFeeRate] = useState(() => getStoredVal('fr', 0.5));
+
+            // Starting Balance & Age
+            const [startingBalance, setStartingBalance] = useState(() => getStoredVal('sb', 0));
+            const [currentAge, setCurrentAge] = useState(() => getStoredVal('ca', 18));
 
             // Scenario Configurations
-            const [scenarios, setScenarios] = useState(parseJson(searchParams.get('scen'), DEFAULT_SCENARIOS));
+            const [scenarios, setScenarios] = useState(() => getStoredVal('scen', DEFAULT_SCENARIOS, true));
 
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
 
-            // Sync state to URL seamlessly
+            // Sync state to LocalStorage seamlessly
             useEffect(() => {
-                const params = new URLSearchParams();
-                params.set('rr', returnRate);
-                params.set('ra', retirementAge);
-                params.set('inf', useInflation);
-                params.set('ir', inflationRate);
-                params.set('la', linkAges);
-                params.set('tm', targetMode);
-                params.set('ta', targetAmount);
-                params.set('ss', showSaver);
-                params.set('sr', savingsRate);
-                params.set('uf', useFees);
-                params.set('fr', feeRate);
-                params.set('scen', encodeURIComponent(JSON.stringify(scenarios)));
-                
-                const newUrl = `${window.location.pathname}?${params.toString()}`;
-                window.history.replaceState({}, '', newUrl);
-            }, [returnRate, retirementAge, useInflation, inflationRate, linkAges, targetMode, targetAmount, showSaver, savingsRate, useFees, feeRate, scenarios]);
+                localStorage.setItem('marketExplorer_rr', returnRate);
+                localStorage.setItem('marketExplorer_ra', retirementAge);
+                localStorage.setItem('marketExplorer_inf', useInflation);
+                localStorage.setItem('marketExplorer_ir', inflationRate);
+                localStorage.setItem('marketExplorer_la', linkAges);
+                localStorage.setItem('marketExplorer_tm', targetMode);
+                localStorage.setItem('marketExplorer_ta', targetAmount);
+                localStorage.setItem('marketExplorer_ss', showSaver);
+                localStorage.setItem('marketExplorer_sr', savingsRate);
+                localStorage.setItem('marketExplorer_uf', useFees);
+                localStorage.setItem('marketExplorer_fr', feeRate);
+                localStorage.setItem('marketExplorer_sb', startingBalance);
+                localStorage.setItem('marketExplorer_ca', currentAge);
+                localStorage.setItem('marketExplorer_scen', JSON.stringify(scenarios));
+            }, [returnRate, retirementAge, useInflation, inflationRate, linkAges, targetMode, targetAmount, showSaver, savingsRate, useFees, feeRate, startingBalance, currentAge, scenarios]);
 
             // Reset Function
             const resetToDefaults = () => {
@@ -117,10 +124,36 @@
                 setSavingsRate(4);
                 setUseFees(false);
                 setFeeRate(0.5);
+                setStartingBalance(0);
+                setCurrentAge(18);
                 setScenarios(DEFAULT_SCENARIOS);
                 
                 // Clear URL params visually on reset
                 window.history.replaceState({}, '', window.location.pathname);
+            };
+            
+            // Handle Current Age Change to prevent time travel
+            const handleCurrentAgeChange = (val) => {
+                const newAge = Number(val);
+                setCurrentAge(newAge);
+                
+                // Push target age up if needed
+                if (retirementAge <= newAge) {
+                    setRetirementAge(newAge + 1);
+                }
+                
+                // Push scenario start ages up if they are now in the past
+                setScenarios(prev => {
+                    let next = { ...prev };
+                    let updated = false;
+                    Object.keys(next).forEach(key => {
+                        if (next[key].startAge < newAge) {
+                            next[key].startAge = newAge;
+                            updated = true;
+                        }
+                    });
+                    return updated ? next : prev;
+                });
             };
 
             // Generate the dataset year by year
@@ -129,7 +162,7 @@
                 const netRate = grossRate - (useFees ? feeRate / 100 : 0);
                 const saverRate = savingsRate / 100; // Fees generally don't apply to savings accounts
                 const infRate = useInflation ? (inflationRate / 100) : 0;
-                const finalDiscount = Math.pow(1 + infRate, retirementAge - 18);
+                const finalDiscount = Math.pow(1 + infRate, retirementAge - currentAge);
 
                 // Initial pass: If Target Mode is ON, calculate the required starting monthly contributions
                 let reqMonthly = {
@@ -150,35 +183,54 @@
                     let b1Saver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
                     let cm1Saver = { student: 1, procrastinator: 1, gradual: 1, milestones: 1 };
                     
-                    for (let age = 18; age <= retirementAge; age++) {
+                    let sbFV = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+                    let sbFVSaver = { student: 0, procrastinator: 0, gradual: 0, milestones: 0 };
+
+                    for (let age = currentAge; age <= retirementAge; age++) {
                         // Invested Multipliers (Net of Fees)
+                        if (age === currentAge) sbFV.student += startingBalance;
                         if (age >= scenarios.smartStudent.startAge) {
                             b1.student = b1.student * (1 + netRate) + cm1.student * 12;
+                            sbFV.student *= (1 + netRate);
                         }
+                        if (age === currentAge) sbFV.procrastinator += startingBalance;
                         if (age >= scenarios.procrastinator.startAge) {
                             b1.procrastinator = b1.procrastinator * (1 + netRate) + cm1.procrastinator * 12;
+                            sbFV.procrastinator *= (1 + netRate);
                         }
+                        if (age === currentAge) sbFV.gradual += startingBalance;
                         if (age >= scenarios.gradual.startAge) {
                             b1.gradual = b1.gradual * (1 + netRate) + cm1.gradual * 12;
                             cm1.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                            sbFV.gradual *= (1 + netRate);
                         }
+                        if (age === currentAge) sbFV.milestones += startingBalance;
                         if (age >= scenarios.milestones.startAge) {
                             b1.milestones = b1.milestones * (1 + netRate) + getMilestoneMultiplier(age) * 12;
+                            sbFV.milestones *= (1 + netRate);
                         }
                         
                         // Saver Multipliers
+                        if (age === currentAge) sbFVSaver.student += startingBalance;
                         if (age >= scenarios.smartStudent.startAge) {
                             b1Saver.student = b1Saver.student * (1 + saverRate) + cm1Saver.student * 12;
+                            sbFVSaver.student *= (1 + saverRate);
                         }
+                        if (age === currentAge) sbFVSaver.procrastinator += startingBalance;
                         if (age >= scenarios.procrastinator.startAge) {
                             b1Saver.procrastinator = b1Saver.procrastinator * (1 + saverRate) + cm1Saver.procrastinator * 12;
+                            sbFVSaver.procrastinator *= (1 + saverRate);
                         }
+                        if (age === currentAge) sbFVSaver.gradual += startingBalance;
                         if (age >= scenarios.gradual.startAge) {
                             b1Saver.gradual = b1Saver.gradual * (1 + saverRate) + cm1Saver.gradual * 12;
                             cm1Saver.gradual *= (1 + (scenarios.gradual.annualIncreaseRate / 100));
+                            sbFVSaver.gradual *= (1 + saverRate);
                         }
+                        if (age === currentAge) sbFVSaver.milestones += startingBalance;
                         if (age >= scenarios.milestones.startAge) {
                             b1Saver.milestones = b1Saver.milestones * (1 + saverRate) + getMilestoneMultiplier(age) * 12;
+                            sbFVSaver.milestones *= (1 + saverRate);
                         }
                     }
                     
@@ -192,20 +244,30 @@
                     b1Saver.procrastinator /= finalDiscount;
                     b1Saver.gradual /= finalDiscount;
                     b1Saver.milestones /= finalDiscount;
+
+                    sbFV.student /= finalDiscount;
+                    sbFV.procrastinator /= finalDiscount;
+                    sbFV.gradual /= finalDiscount;
+                    sbFV.milestones /= finalDiscount;
+
+                    sbFVSaver.student /= finalDiscount;
+                    sbFVSaver.procrastinator /= finalDiscount;
+                    sbFVSaver.gradual /= finalDiscount;
+                    sbFVSaver.milestones /= finalDiscount;
                     
                     // Calculate required amount to hit the Target Portfolio
                     reqMonthly = {
-                        student: b1.student > 0 ? targetAmount / b1.student : 0,
-                        procrastinator: b1.procrastinator > 0 ? targetAmount / b1.procrastinator : 0,
-                        gradual: b1.gradual > 0 ? targetAmount / b1.gradual : 0,
-                        milestones: b1.milestones > 0 ? targetAmount / b1.milestones : 0
+                        student: b1.student > 0 ? Math.max(0, (targetAmount - sbFV.student) / b1.student) : 0,
+                        procrastinator: b1.procrastinator > 0 ? Math.max(0, (targetAmount - sbFV.procrastinator) / b1.procrastinator) : 0,
+                        gradual: b1.gradual > 0 ? Math.max(0, (targetAmount - sbFV.gradual) / b1.gradual) : 0,
+                        milestones: b1.milestones > 0 ? Math.max(0, (targetAmount - sbFV.milestones) / b1.milestones) : 0
                     };
                     
                     reqMonthlySaver = {
-                        student: b1Saver.student > 0 ? targetAmount / b1Saver.student : 0,
-                        procrastinator: b1Saver.procrastinator > 0 ? targetAmount / b1Saver.procrastinator : 0,
-                        gradual: b1Saver.gradual > 0 ? targetAmount / b1Saver.gradual : 0,
-                        milestones: b1Saver.milestones > 0 ? targetAmount / b1Saver.milestones : 0
+                        student: b1Saver.student > 0 ? Math.max(0, (targetAmount - sbFVSaver.student) / b1Saver.student) : 0,
+                        procrastinator: b1Saver.procrastinator > 0 ? Math.max(0, (targetAmount - sbFVSaver.procrastinator) / b1Saver.procrastinator) : 0,
+                        gradual: b1Saver.gradual > 0 ? Math.max(0, (targetAmount - sbFVSaver.gradual) / b1Saver.gradual) : 0,
+                        milestones: b1Saver.milestones > 0 ? Math.max(0, (targetAmount - sbFVSaver.milestones) / b1Saver.milestones) : 0
                     };
                 }
 
@@ -220,7 +282,7 @@
                 let currentMonthly = { ...reqMonthly };
                 let currentMonthlySaver = { ...reqMonthlySaver };
                 
-                // For milestones, reverse engineer the absolute "Age 18 base" 
+                // For milestones, reverse engineer the absolute base 
                 let milestoneBase = targetMode 
                     ? reqMonthly.milestones 
                     : scenarios.milestones.initialMonthly / getMilestoneMultiplier(scenarios.milestones.startAge);
@@ -229,15 +291,22 @@
                     ? reqMonthlySaver.milestones 
                     : scenarios.milestones.initialMonthly / getMilestoneMultiplier(scenarios.milestones.startAge);
 
-                for (let age = 18; age <= retirementAge; age++) {
+                for (let age = currentAge; age <= retirementAge; age++) {
                     let row = { age };
                     let sContrib = 0, pContrib = 0, gContrib = 0, mContrib = 0;
                     let sContribSaver = 0, pContribSaver = 0, gContribSaver = 0, mContribSaver = 0;
 
                     // Discount factor for "Real" balances (adjusting for inflation)
-                    const discount = Math.pow(1 + infRate, age - 18);
+                    const discount = Math.pow(1 + infRate, age - currentAge);
 
                     // 1. The Early Starter
+                    if (age === currentAge) {
+                        grossBalances.student += startingBalance;
+                        balances.student += startingBalance;
+                        balancesSaver.student += startingBalance;
+                        totalInvested.student += startingBalance;
+                        totalInvestedSaver.student += startingBalance;
+                    }
                     if (age >= scenarios.smartStudent.startAge) {
                         sContrib = currentMonthly.student * 12;
                         sContribSaver = currentMonthlySaver.student * 12;
@@ -253,8 +322,16 @@
                     row.studentSaver = balancesSaver.student / discount;
                     row.studentInvested = totalInvested.student; // Locked to nominal out-of-pocket cash
                     row.studentContrib = sContrib; // Keep nominal for display
+                    row.studentStartBal = age === currentAge ? startingBalance : 0;
 
                     // 2. The Procrastinator / Catch-Up
+                    if (age === currentAge) {
+                        grossBalances.procrastinator += startingBalance;
+                        balances.procrastinator += startingBalance;
+                        balancesSaver.procrastinator += startingBalance;
+                        totalInvested.procrastinator += startingBalance;
+                        totalInvestedSaver.procrastinator += startingBalance;
+                    }
                     if (age >= scenarios.procrastinator.startAge) {
                         pContrib = currentMonthly.procrastinator * 12;
                         pContribSaver = currentMonthlySaver.procrastinator * 12;
@@ -270,8 +347,16 @@
                     row.procrastinatorSaver = balancesSaver.procrastinator / discount;
                     row.procrastinatorInvested = totalInvested.procrastinator; // Locked to nominal out-of-pocket cash
                     row.procrastinatorContrib = pContrib;
+                    row.procrastinatorStartBal = age === currentAge ? startingBalance : 0;
 
                     // 3. Gradual Increase
+                    if (age === currentAge) {
+                        grossBalances.gradual += startingBalance;
+                        balances.gradual += startingBalance;
+                        balancesSaver.gradual += startingBalance;
+                        totalInvested.gradual += startingBalance;
+                        totalInvestedSaver.gradual += startingBalance;
+                    }
                     if (age >= scenarios.gradual.startAge) {
                         gContrib = currentMonthly.gradual * 12;
                         gContribSaver = currentMonthlySaver.gradual * 12;
@@ -290,8 +375,16 @@
                     row.gradualSaver = balancesSaver.gradual / discount;
                     row.gradualInvested = totalInvested.gradual; // Locked to nominal out-of-pocket cash
                     row.gradualContrib = gContrib;
+                    row.gradualStartBal = age === currentAge ? startingBalance : 0;
 
                     // 4. Milestones
+                    if (age === currentAge) {
+                        grossBalances.milestones += startingBalance;
+                        balances.milestones += startingBalance;
+                        balancesSaver.milestones += startingBalance;
+                        totalInvested.milestones += startingBalance;
+                        totalInvestedSaver.milestones += startingBalance;
+                    }
                     if (age >= scenarios.milestones.startAge) {
                         let mMult = getMilestoneMultiplier(age);
                         mContrib = milestoneBase * mMult * 12;
@@ -308,6 +401,7 @@
                     row.milestonesSaver = balancesSaver.milestones / discount;
                     row.milestonesInvested = totalInvested.milestones; // Locked to nominal out-of-pocket cash
                     row.milestonesContrib = mContrib;
+                    row.milestonesStartBal = age === currentAge ? startingBalance : 0;
 
                     chartData.push(row);
                 }
@@ -372,7 +466,7 @@
                         milestones: reqMonthlySaver.milestones * getMilestoneMultiplier(scenarios.milestones.startAge)
                     }
                 };
-            }, [returnRate, retirementAge, scenarios, useInflation, inflationRate, targetMode, targetAmount, savingsRate, useFees, feeRate]);
+            }, [returnRate, retirementAge, scenarios, useInflation, inflationRate, targetMode, targetAmount, savingsRate, useFees, feeRate, startingBalance, currentAge]);
 
             const formatCurrency = (value) => {
                 return new Intl.NumberFormat('en-US', {
@@ -421,6 +515,54 @@
                     }));
                 }
                 setTargetMode(!targetMode);
+            };
+
+            // Custom slider component to handle dynamic labels
+            const renderSlider = (scenarioKey, colorClass, accentClass) => {
+                const min = currentAge;
+                const max = Math.max(currentAge, retirementAge - 1);
+                const range = max - min === 0 ? 1 : max - min;
+                const value = scenarios[scenarioKey].startAge;
+                const percent = ((value - min) / range) * 100;
+                
+                // Keep label perfectly centered over the thumb natively
+                const thumbOffset = 8 - (percent * 0.16);
+
+                return (
+                    <div className="relative pt-8 pb-3 mb-2 mt-2">
+                        {/* Dynamic Floating Label */}
+                        <div 
+                            className="absolute top-0 transform -translate-x-1/2 flex flex-col items-center justify-center pointer-events-none"
+                            style={{ left: `calc(${percent}% + ${thumbOffset}px)` }}
+                        >
+                            <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center min-w-[70px]">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide leading-none mb-1">Start Age</span>
+                                <span className={`text-lg font-black ${colorClass} leading-none`}>{value}</span>
+                            </div>
+                        </div>
+                        
+                        <input 
+                            type="range" 
+                            min={min} 
+                            max={max} 
+                            value={value} 
+                            onChange={e => handleAgeChange(scenarioKey, e.target.value)} 
+                            className={`w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer ${accentClass} relative z-10 mt-1`} 
+                        />
+                        
+                        {/* Bottom Track Labels */}
+                        <div className="flex justify-between mt-2 px-1 pointer-events-none">
+                            <div className="flex flex-col items-start">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Current Age</span>
+                                <span className="text-sm font-extrabold text-slate-500 leading-none">{min}</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Target Age</span>
+                                <span className="text-sm font-extrabold text-slate-500 leading-none">{retirementAge}</span>
+                            </div>
+                        </div>
+                    </div>
+                );
             };
 
             // Manage Chart.js instance
@@ -641,12 +783,23 @@
                                         const isMilestoneRow = scenarioKey === 'milestones' && [25, 30, 35, 50].includes(row.age);
                                         return (
                                         <tr key={row.age} className={`border-t border-slate-100 transition-colors ${isMilestoneRow ? 'bg-purple-50 hover:bg-purple-100' : 'hover:bg-slate-100'}`}>
-                                            <td className={`py-2.5 text-slate-700 ${isMilestoneRow ? 'font-bold text-purple-700 flex items-center gap-2' : 'font-medium'}`}>
-                                                {row.age}
-                                                {isMilestoneRow && <span className="text-[10px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full uppercase tracking-wider">{row.age === 25 ? '10x Bump' : '2x Bump'}</span>}
+                                            <td className={`py-2.5 text-slate-700 ${isMilestoneRow ? 'font-bold text-purple-700' : 'font-medium'}`}>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>{row.age}</span>
+                                                    {isMilestoneRow && <span className="text-[9px] sm:text-[10px] bg-purple-200 text-purple-800 px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0">{row.age === 25 ? '10x Bump' : '2x Bump'}</span>}
+                                                </div>
                                             </td>
                                             <td className={`py-2.5 text-right ${isMilestoneRow ? 'font-bold text-purple-700' : 'text-slate-600'}`}>{formatCurrency(row[contribKey] / 12)}</td>
-                                            <td className={`py-2.5 text-right ${isMilestoneRow ? 'font-bold text-purple-700' : 'text-slate-800'}`}>{formatCurrency(row[contribKey])}</td>
+                                            <td className={`py-2.5 text-right ${isMilestoneRow ? 'font-bold text-purple-700' : 'text-slate-800'}`}>
+                                                <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                                                    {row[contribKey.replace('Contrib', 'StartBal')] > 0 && (
+                                                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded uppercase tracking-wide whitespace-nowrap shrink-0">
+                                                            +{formatCurrency(row[contribKey.replace('Contrib', 'StartBal')])} Start
+                                                        </span>
+                                                    )}
+                                                    <span>{formatCurrency(row[contribKey])}</span>
+                                                </div>
+                                            </td>
                                             <td className="py-2.5 text-right font-bold text-slate-900">{formatCurrency(row[dataKey])}</td>
                                         </tr>
                                     )})}
@@ -661,85 +814,106 @@
                 <div className="min-h-screen relative bg-slate-50">
                     
                     {/* Sticky Header & Controls */}
-                    <div className="sticky top-0 z-50 pt-2 md:pt-4 pb-2 md:pb-3 px-2 md:px-4 bg-slate-50/95 backdrop-blur-md shadow-sm border-b border-slate-200">
-                        <div className="max-w-[2000px] mx-auto flex flex-col 2xl:flex-row 2xl:items-center justify-between bg-white p-2.5 md:p-3 rounded-2xl shadow-sm border-2 border-slate-200 gap-3">
+                    <div className="sticky top-0 z-50 pt-2 md:pt-4 pb-2 md:pb-4 px-2 md:px-4 bg-slate-50/95 backdrop-blur-md shadow-sm border-b border-slate-200">
+                        <div className="max-w-[2000px] mx-auto flex flex-col bg-white p-3 md:p-4 rounded-2xl shadow-sm border-2 border-slate-200 gap-3 md:gap-4">
                             
-                            {/* Left: Title */}
-                            <div className="flex items-center gap-3 shrink-0 px-1">
-                                <TrendingUpIcon className="text-blue-600 w-8 h-8 md:w-10 md:h-10" />
-                                <div>
-                                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight leading-none">Time in the Market</h1>
-                                    <p className="text-slate-500 text-xs md:text-sm font-bold mt-0.5">Interactive visualization</p>
+                            {/* TOP ROW: Title, Always-On Settings, Reset */}
+                            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-100 pb-3 md:pb-4">
+                                {/* Left: Title */}
+                                <div className="flex items-center gap-3 shrink-0 px-1">
+                                    <TrendingUpIcon className="text-blue-600 w-8 h-8 md:w-10 md:h-10" />
+                                    <div>
+                                        <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight leading-none">Time in the Market</h1>
+                                        <p className="text-slate-500 text-xs md:text-sm font-bold mt-1">Interactive visualization</p>
+                                    </div>
+                                </div>
+                                
+                                {/* Right: Primary Always-On Controls */}
+                                <div className="flex flex-wrap gap-2 md:gap-3 items-center xl:ml-auto">
+                                    
+                                    {/* Start Balance Input */}
+                                    <div className="flex items-center px-3 py-1.5 md:py-2 rounded-lg bg-white shadow-sm border-2 border-slate-300 focus-within:border-blue-500 transition-colors">
+                                        <label className="text-xs md:text-sm font-extrabold text-slate-800 mr-2 whitespace-nowrap">Starting Balance</label>
+                                        <span className="text-slate-800 font-extrabold text-sm md:text-base mr-1">$</span>
+                                        <input type="text" placeholder="0" value={startingBalance ? startingBalance.toLocaleString('en-US') : ''} onChange={(e) => setStartingBalance(Number(e.target.value.replace(/[^0-9]/g, '')))} className="w-20 md:w-24 text-right outline-none font-extrabold text-sm md:text-base text-slate-900 bg-transparent" />
+                                    </div>
+
+                                    {/* Return Input */}
+                                    <div className="flex items-center px-3 py-1.5 md:py-2 rounded-lg bg-white shadow-sm border-2 border-slate-300 focus-within:border-blue-500 transition-colors">
+                                        <label className="text-xs md:text-sm font-extrabold text-slate-800 mr-2 whitespace-nowrap">Annual Return</label>
+                                        <input type="number" step="0.1" value={returnRate} onChange={(e) => setReturnRate(Number(e.target.value))} className="w-12 md:w-14 text-right outline-none font-extrabold text-sm md:text-base text-slate-900 bg-transparent" />
+                                        <span className="text-slate-800 font-extrabold text-sm md:text-base ml-1">%</span>
+                                    </div>
+
+                                    {/* Current Age Input */}
+                                    <div className="flex items-center px-3 py-1.5 md:py-2 rounded-lg bg-white shadow-sm border-2 border-slate-300 focus-within:border-blue-500 transition-colors">
+                                        <label className="text-xs md:text-sm font-extrabold text-slate-800 mr-2 whitespace-nowrap">Current Age</label>
+                                        <input type="number" value={currentAge} onChange={(e) => handleCurrentAgeChange(e.target.value)} className="w-10 md:w-12 text-right outline-none font-extrabold text-sm md:text-base text-slate-900 bg-transparent" />
+                                    </div>
+
+                                    {/* Target Age Input */}
+                                    <div className="flex items-center px-3 py-1.5 md:py-2 rounded-lg bg-white shadow-sm border-2 border-slate-300 focus-within:border-blue-500 transition-colors">
+                                        <label className="text-xs md:text-sm font-extrabold text-slate-800 mr-2 whitespace-nowrap">Target Age</label>
+                                        <input type="number" value={retirementAge} onChange={(e) => setRetirementAge(Number(e.target.value))} className="w-10 md:w-12 text-right outline-none font-extrabold text-sm md:text-base text-slate-900 bg-transparent" />
+                                    </div>
+
+                                    {/* Reset Button */}
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 md:py-2 rounded-lg bg-slate-800 text-white shadow-sm border-2 border-slate-800 cursor-pointer hover:bg-slate-700 transition-colors ml-auto md:ml-2" onClick={resetToDefaults} title="Reset to Defaults">
+                                        <RotateCcwIcon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                                        <span className="text-xs md:text-sm font-bold select-none whitespace-nowrap">Reset</span>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            {/* Right: Compact Controls Grid */}
-                            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center w-full 2xl:w-auto 2xl:justify-end">
+
+                            {/* BOTTOM ROW: Toggle Features */}
+                            <div className="flex flex-wrap gap-2 md:gap-3 items-center xl:justify-end pb-1 md:pb-0">
                                 
                                 {/* Link Ages Toggle */}
-                                <div className="flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setLinkAges(!linkAges)}>
-                                    <input type="checkbox" checked={linkAges} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 rounded cursor-pointer shrink-0 pointer-events-none" />
-                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-slate-700 select-none whitespace-nowrap pointer-events-none">Link Start Ages</span>
+                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg shadow-sm border-2 transition-all cursor-pointer ${linkAges ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-100' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 opacity-90'}`} onClick={() => setLinkAges(!linkAges)}>
+                                    <input type="checkbox" checked={linkAges} readOnly className={`w-4 h-4 rounded cursor-pointer shrink-0 pointer-events-none ${linkAges ? 'text-blue-600' : 'text-slate-400 grayscale opacity-50'}`} />
+                                    <span className={`text-sm font-bold cursor-pointer select-none whitespace-nowrap pointer-events-none ${linkAges ? 'text-blue-800' : 'text-slate-500'}`}>Link Start Ages</span>
                                 </div>
                             
                                 {/* Target Mode */}
-                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${targetMode ? 'bg-white border-blue-400 ring-1 ring-blue-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={handleTargetModeToggle}>
-                                    <input type="checkbox" checked={targetMode} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 rounded cursor-pointer shrink-0 pointer-events-none" />
-                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-blue-700 select-none whitespace-nowrap pointer-events-none">Target Mode</span>
-                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${targetMode ? 'border-blue-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                        <span className={`font-bold text-sm lg:text-base mr-0.5 transition-colors ${targetMode ? 'text-blue-700' : 'text-slate-400'}`}>$</span>
-                                        <input type="text" value={targetAmount ? targetAmount.toLocaleString('en-US') : ''} onChange={(e) => setTargetAmount(Number(e.target.value.replace(/[^0-9]/g, '')))} disabled={!targetMode} className={`w-20 lg:w-24 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${targetMode ? 'text-blue-800' : 'text-slate-400 cursor-not-allowed'}`} />
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer ${targetMode ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-100' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 opacity-90'}`} onClick={handleTargetModeToggle}>
+                                    <input type="checkbox" checked={targetMode} readOnly className={`w-4 h-4 rounded cursor-pointer shrink-0 pointer-events-none ${targetMode ? 'text-blue-600' : 'text-slate-400 grayscale opacity-50'}`} />
+                                    <span className={`text-sm font-bold cursor-pointer select-none whitespace-nowrap pointer-events-none ${targetMode ? 'text-blue-800' : 'text-slate-500'}`}>Target Portfolio</span>
+                                    <div className={`flex items-center ml-1 pl-2 border-l transition-colors ${targetMode ? 'border-blue-300' : 'border-slate-300'}`} onClick={(e) => e.stopPropagation()}>
+                                        <span className={`font-bold text-base mr-1 transition-colors ${targetMode ? 'text-blue-800' : 'text-slate-400'}`}>$</span>
+                                        <input type="text" value={targetAmount ? targetAmount.toLocaleString('en-US') : ''} onChange={(e) => setTargetAmount(Number(e.target.value.replace(/[^0-9]/g, '')))} disabled={!targetMode} className={`w-24 md:w-28 text-right outline-none font-extrabold text-base bg-transparent transition-colors ${targetMode ? 'text-blue-900' : 'text-slate-500 cursor-not-allowed'}`} />
                                     </div>
                                 </div>
 
                                 {/* Saver Mode */}
-                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${showSaver ? 'bg-white border-indigo-400 ring-1 ring-indigo-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setShowSaver(!showSaver)}>
-                                    <input type="checkbox" checked={showSaver} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-indigo-600 rounded cursor-pointer shrink-0 pointer-events-none" />
-                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-indigo-700 select-none whitespace-nowrap pointer-events-none">Compare to Savings</span>
-                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${showSaver ? 'border-indigo-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                        <input type="number" step="0.01" value={savingsRate} onChange={(e) => setSavingsRate(Number(e.target.value))} disabled={!showSaver} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${showSaver ? 'text-indigo-800' : 'text-slate-400 cursor-not-allowed'}`} />
-                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${showSaver ? 'text-indigo-700' : 'text-slate-400'}`}>%</span>
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer ${showSaver ? 'bg-indigo-50 border-indigo-400 ring-1 ring-indigo-100' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 opacity-90'}`} onClick={() => setShowSaver(!showSaver)}>
+                                    <input type="checkbox" checked={showSaver} readOnly className={`w-4 h-4 rounded cursor-pointer shrink-0 pointer-events-none ${showSaver ? 'text-indigo-600' : 'text-slate-400 grayscale opacity-50'}`} />
+                                    <span className={`text-sm font-bold cursor-pointer select-none whitespace-nowrap pointer-events-none ${showSaver ? 'text-indigo-800' : 'text-slate-500'}`}>Compare to Savings</span>
+                                    <div className={`flex items-center ml-1 pl-2 border-l transition-colors ${showSaver ? 'border-indigo-300' : 'border-slate-300'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.1" value={savingsRate} onChange={(e) => setSavingsRate(Number(e.target.value))} disabled={!showSaver} className={`w-12 md:w-14 text-right outline-none font-extrabold text-base bg-transparent transition-colors ${showSaver ? 'text-indigo-900' : 'text-slate-500 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-base ml-1 transition-colors ${showSaver ? 'text-indigo-800' : 'text-slate-400'}`}>%</span>
                                     </div>
                                 </div>
 
                                 {/* Inflation */}
-                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${useInflation ? 'bg-white border-amber-400 ring-1 ring-amber-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setUseInflation(!useInflation)}>
-                                    <input type="checkbox" checked={useInflation} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-600 rounded cursor-pointer shrink-0 pointer-events-none" />
-                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-amber-700 select-none whitespace-nowrap pointer-events-none">Inflation</span>
-                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${useInflation ? 'border-amber-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                        <input type="number" step="0.01" value={inflationRate} onChange={(e) => setInflationRate(Number(e.target.value))} disabled={!useInflation} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${useInflation ? 'text-amber-800' : 'text-slate-400 cursor-not-allowed'}`} />
-                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${useInflation ? 'text-amber-700' : 'text-slate-400'}`}>%</span>
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer ${useInflation ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-100' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 opacity-90'}`} onClick={() => setUseInflation(!useInflation)}>
+                                    <input type="checkbox" checked={useInflation} readOnly className={`w-4 h-4 rounded cursor-pointer shrink-0 pointer-events-none ${useInflation ? 'text-amber-600' : 'text-slate-400 grayscale opacity-50'}`} />
+                                    <span className={`text-sm font-bold cursor-pointer select-none whitespace-nowrap pointer-events-none ${useInflation ? 'text-amber-800' : 'text-slate-500'}`}>Inflation</span>
+                                    <div className={`flex items-center ml-1 pl-2 border-l transition-colors ${useInflation ? 'border-amber-300' : 'border-slate-300'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.1" value={inflationRate} onChange={(e) => setInflationRate(Number(e.target.value))} disabled={!useInflation} className={`w-12 md:w-14 text-right outline-none font-extrabold text-base bg-transparent transition-colors ${useInflation ? 'text-amber-900' : 'text-slate-500 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-base ml-1 transition-colors ${useInflation ? 'text-amber-800' : 'text-slate-400'}`}>%</span>
                                     </div>
                                 </div>
 
                                 {/* Mgmt Fee */}
-                                <div className={`flex items-center gap-1.5 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg shadow-sm border transition-all cursor-pointer hover:bg-slate-50 ${useFees ? 'bg-white border-rose-400 ring-1 ring-rose-100' : 'bg-white border-slate-200 opacity-90'}`} onClick={() => setUseFees(!useFees)}>
-                                    <input type="checkbox" checked={useFees} readOnly className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-rose-600 rounded cursor-pointer shrink-0 pointer-events-none" />
-                                    <span className="text-xs lg:text-sm font-bold cursor-pointer text-rose-700 select-none whitespace-nowrap pointer-events-none">Mgmt Fee</span>
-                                    <div className={`flex items-center ml-1 pl-1.5 border-l transition-colors ${useFees ? 'border-rose-200' : 'border-slate-200'}`} onClick={(e) => e.stopPropagation()}>
-                                        <input type="number" step="0.01" value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} disabled={!useFees} className={`w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base bg-transparent transition-colors ${useFees ? 'text-rose-800' : 'text-slate-400 cursor-not-allowed'}`} />
-                                        <span className={`font-bold text-sm lg:text-base ml-0.5 transition-colors ${useFees ? 'text-rose-700' : 'text-slate-400'}`}>%</span>
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg shadow-sm border-2 transition-all cursor-pointer ${useFees ? 'bg-rose-50 border-rose-400 ring-1 ring-rose-100' : 'bg-slate-100 border-slate-200 hover:bg-slate-200 opacity-90'}`} onClick={() => setUseFees(!useFees)}>
+                                    <input type="checkbox" checked={useFees} readOnly className={`w-4 h-4 rounded cursor-pointer shrink-0 pointer-events-none ${useFees ? 'text-rose-600' : 'text-slate-400 grayscale opacity-50'}`} />
+                                    <span className={`text-sm font-bold cursor-pointer select-none whitespace-nowrap pointer-events-none ${useFees ? 'text-rose-800' : 'text-slate-500'}`}>Management Fee</span>
+                                    <div className={`flex items-center ml-1 pl-2 border-l transition-colors ${useFees ? 'border-rose-300' : 'border-slate-300'}`} onClick={(e) => e.stopPropagation()}>
+                                        <input type="number" step="0.01" value={feeRate} onChange={(e) => setFeeRate(Number(e.target.value))} disabled={!useFees} className={`w-12 md:w-14 text-right outline-none font-extrabold text-base bg-transparent transition-colors ${useFees ? 'text-rose-900' : 'text-slate-500 cursor-not-allowed'}`} />
+                                        <span className={`font-bold text-base ml-1 transition-colors ${useFees ? 'text-rose-800' : 'text-slate-400'}`}>%</span>
                                     </div>
                                 </div>
-                                
-                                {/* Return Input */}
-                                <div className="flex items-center px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 focus-within:border-blue-500 transition-colors">
-                                    <label className="text-xs lg:text-sm font-bold text-slate-700 mr-1.5 whitespace-nowrap">Return</label>
-                                    <input type="number" step="0.01" value={returnRate} onChange={(e) => setReturnRate(Number(e.target.value))} className="w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base text-slate-800 bg-transparent" />
-                                    <span className="text-slate-500 font-bold text-sm lg:text-base ml-0.5">%</span>
-                                </div>
 
-                                {/* Target Age Input */}
-                                <div className="flex items-center px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-white shadow-sm border border-slate-200 focus-within:border-blue-500 transition-colors">
-                                    <label className="text-xs lg:text-sm font-bold text-slate-700 mr-1.5 whitespace-nowrap">Target Age</label>
-                                    <input type="number" value={retirementAge} onChange={(e) => setRetirementAge(Number(e.target.value))} className="w-10 lg:w-12 text-right outline-none font-extrabold text-sm lg:text-base text-slate-800 bg-transparent" />
-                                </div>
-
-                                {/* Reset Button */}
-                                <div className="flex items-center gap-1 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-lg bg-slate-100 shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors ml-auto 2xl:ml-2" onClick={resetToDefaults} title="Reset to Defaults">
-                                    <RotateCcwIcon className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600 shrink-0" />
-                                    <span className="text-xs lg:text-sm font-bold text-slate-700 select-none whitespace-nowrap">Reset</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -799,37 +973,25 @@
                                 
                                 {scenarios.smartStudent.isVisible && (
                                     <div className="flex flex-col flex-1 animate-in fade-in duration-300">
-                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts early with a steady, fixed contribution.</p>
+                                        <p className="text-base font-medium text-slate-500 mb-2 h-12">Starts early with a steady, fixed contribution.</p>
                                         
                                         <div className="space-y-4 mb-4">
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
-                                                    <span className="text-2xl font-extrabold text-blue-600">{scenarios.smartStudent.startAge}</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="18" 
-                                                    max={retirementAge - 1} 
-                                                    value={scenarios.smartStudent.startAge} 
-                                                    onChange={e => handleAgeChange('smartStudent', e.target.value)} 
-                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" 
-                                                />
-                                            </div>
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
-                                                <div className="flex flex-col items-end">
+                                            {renderSlider('smartStudent', 'text-blue-600', 'accent-blue-600')}
+                                            
+                                            <div className="flex justify-between items-center gap-1">
+                                                <span className="text-sm xl:text-base font-bold text-slate-700 leading-tight">{targetMode ? 'Required Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end shrink-0">
                                                     <div 
                                                         className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-blue-300' : 'bg-slate-50 border-slate-300 focus-within:border-blue-500 transition-colors'}`}
                                                         title={targetMode ? `Exact amount required: $${requiredMonthly.student}` : ''}
                                                     >
-                                                        <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                        <span className="text-slate-500 font-bold text-lg xl:text-xl mr-1">$</span>
                                                         <input 
-                                                            type="number" 
-                                                            value={targetMode ? requiredMonthly.student.toFixed(0) : scenarios.smartStudent.initialMonthly} 
-                                                            onChange={e => updateScenario('smartStudent', 'initialMonthly', e.target.value)} 
+                                                            type="text" 
+                                                            value={targetMode ? Math.round(requiredMonthly.student).toLocaleString('en-US') : (scenarios.smartStudent.initialMonthly ? scenarios.smartStudent.initialMonthly.toLocaleString('en-US') : '')} 
+                                                            onChange={e => updateScenario('smartStudent', 'initialMonthly', e.target.value.replace(/[^0-9]/g, ''))} 
                                                             disabled={targetMode} 
-                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-blue-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                            className={`w-20 md:w-24 text-right outline-none bg-transparent font-bold text-lg xl:text-xl ${targetMode ? 'text-blue-800 cursor-not-allowed' : 'text-slate-800'}`} 
                                                         />
                                                     </div>
                                                     {targetMode && showSaver && (
@@ -893,37 +1055,25 @@
                                 
                                 {scenarios.procrastinator.isVisible && (
                                     <div className="flex flex-col flex-1 animate-in fade-in duration-300">
-                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Waits until later, but contributes heavily to catch up.</p>
+                                        <p className="text-base font-medium text-slate-500 mb-2 h-12">Waits until later, but contributes heavily to catch up.</p>
                                         
                                         <div className="space-y-4 mb-4">
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
-                                                    <span className="text-2xl font-extrabold text-red-600">{scenarios.procrastinator.startAge}</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="18" 
-                                                    max={retirementAge - 1} 
-                                                    value={scenarios.procrastinator.startAge} 
-                                                    onChange={e => handleAgeChange('procrastinator', e.target.value)} 
-                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-600" 
-                                                />
-                                            </div>
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
-                                                <div className="flex flex-col items-end">
+                                            {renderSlider('procrastinator', 'text-red-600', 'accent-red-600')}
+
+                                            <div className="flex justify-between items-center gap-1">
+                                                <span className="text-sm xl:text-base font-bold text-slate-700 leading-tight">{targetMode ? 'Required Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end shrink-0">
                                                     <div 
                                                         className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-red-300' : 'bg-slate-50 border-slate-300 focus-within:border-red-500 transition-colors'}`}
                                                         title={targetMode ? `Exact amount required: $${requiredMonthly.procrastinator}` : ''}
                                                     >
                                                         <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                         <input 
-                                                            type="number" 
-                                                            value={targetMode ? requiredMonthly.procrastinator.toFixed(0) : scenarios.procrastinator.initialMonthly} 
-                                                            onChange={e => updateScenario('procrastinator', 'initialMonthly', e.target.value)} 
+                                                            type="text" 
+                                                            value={targetMode ? Math.round(requiredMonthly.procrastinator).toLocaleString('en-US') : (scenarios.procrastinator.initialMonthly ? scenarios.procrastinator.initialMonthly.toLocaleString('en-US') : '')} 
+                                                            onChange={e => updateScenario('procrastinator', 'initialMonthly', e.target.value.replace(/[^0-9]/g, ''))} 
                                                             disabled={targetMode} 
-                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-red-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                            className={`w-20 md:w-24 text-right outline-none bg-transparent font-bold text-lg xl:text-xl ${targetMode ? 'text-red-800 cursor-not-allowed' : 'text-slate-800'}`} 
                                                         />
                                                     </div>
                                                     {targetMode && showSaver && (
@@ -987,54 +1137,42 @@
                                 
                                 {scenarios.gradual.isVisible && (
                                     <div className="flex flex-col flex-1 animate-in fade-in duration-300">
-                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts small, increases by a set % every year.</p>
+                                        <p className="text-base font-medium text-slate-500 mb-2 h-12">Starts small, increases by a set % every year.</p>
                                         
                                         <div className="space-y-4 mb-4">
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
-                                                    <span className="text-2xl font-extrabold text-emerald-600">{scenarios.gradual.startAge}</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="18" 
-                                                    max={retirementAge - 1} 
-                                                    value={scenarios.gradual.startAge} 
-                                                    onChange={e => handleAgeChange('gradual', e.target.value)} 
-                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" 
-                                                />
-                                            </div>
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
-                                                <div className="flex flex-col items-end">
-                                                    <div className="flex items-center gap-1 xl:gap-2">
+                                            {renderSlider('gradual', 'text-emerald-600', 'accent-emerald-600')}
+
+                                            <div className="flex justify-between items-center gap-1">
+                                                <span className="text-sm xl:text-base font-bold text-slate-700 leading-tight">{targetMode ? 'Required Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end shrink-0">
+                                                    <div className="flex items-center ml-auto">
                                                         <div 
-                                                            className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-emerald-300' : 'bg-slate-50 border-slate-300 focus-within:border-emerald-500 transition-colors'}`}
+                                                            className={`flex items-center border-2 rounded-xl px-1.5 md:px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-emerald-300' : 'bg-slate-50 border-slate-300 focus-within:border-emerald-500 transition-colors'}`}
                                                             title={targetMode ? `Exact amount required: $${requiredMonthly.gradual}` : ''}
                                                         >
-                                                            <span className="text-slate-500 font-bold text-xl mr-1">$</span>
+                                                            <span className="text-slate-500 font-bold text-lg xl:text-xl mr-1">$</span>
                                                             <input 
-                                                                type="number" 
-                                                                value={targetMode ? requiredMonthly.gradual.toFixed(0) : scenarios.gradual.initialMonthly} 
-                                                                onChange={e => updateScenario('gradual', 'initialMonthly', e.target.value)} 
+                                                                type="text" 
+                                                                value={targetMode ? Math.round(requiredMonthly.gradual).toLocaleString('en-US') : (scenarios.gradual.initialMonthly ? scenarios.gradual.initialMonthly.toLocaleString('en-US') : '')} 
+                                                                onChange={e => updateScenario('gradual', 'initialMonthly', e.target.value.replace(/[^0-9]/g, ''))} 
                                                                 disabled={targetMode} 
-                                                                className={`w-14 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-emerald-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                                className={`w-16 md:w-20 lg:w-24 text-right outline-none bg-transparent font-bold text-lg xl:text-xl ${targetMode ? 'text-emerald-800 cursor-not-allowed' : 'text-slate-800'}`} 
                                                             />
                                                         </div>
-                                                        <div className="flex items-center ml-1">
-                                                            <span className="text-slate-400 font-bold text-xl mr-1.5">+</span>
+                                                        <div className="flex items-center ml-0.5">
+                                                            <span className="text-slate-400 font-bold text-lg mr-1">+</span>
                                                             <div className="flex flex-col items-end mr-1.5">
                                                                 <span className="text-[10px] font-bold text-slate-500 uppercase leading-none">Annual</span>
                                                                 <span className="text-[10px] font-bold text-slate-500 uppercase leading-none mt-0.5">Increase</span>
                                                             </div>
-                                                            <div className="flex items-center border-2 border-slate-300 rounded-xl px-2 py-1.5 bg-slate-50 focus-within:border-emerald-500 transition-colors">
+                                                            <div className="flex items-center border-2 border-slate-300 rounded-xl px-1.5 py-1.5 bg-slate-50 focus-within:border-emerald-500 transition-colors" title="Annual Increase %">
                                                                 <input 
                                                                     type="number" 
                                                                     value={scenarios.gradual.annualIncreaseRate} 
                                                                     onChange={e => updateScenario('gradual', 'annualIncreaseRate', e.target.value)} 
-                                                                    className="w-10 text-right outline-none bg-transparent font-bold text-xl text-slate-800" 
+                                                                    className="w-8 sm:w-10 text-right outline-none bg-transparent font-bold text-base xl:text-lg text-slate-800" 
                                                                 />
-                                                                <span className="text-slate-500 font-bold text-lg ml-0.5">%</span>
+                                                                <span className="text-slate-500 font-bold text-base xl:text-lg ml-0.5">%</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1099,37 +1237,25 @@
                                 
                                 {scenarios.milestones.isVisible && (
                                     <div className="flex flex-col flex-1 animate-in fade-in duration-300">
-                                        <p className="text-base font-medium text-slate-500 mb-4 h-12">Starts small, with realistic contribution bumps at ages 25, 30, 35, & 50.</p>
+                                        <p className="text-base font-medium text-slate-500 mb-2 h-12">Starts small, with realistic contribution bumps at ages 25, 30, 35, & 50.</p>
                                         
                                         <div className="space-y-4 mb-4">
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-lg font-bold text-slate-700">Start Age</span>
-                                                    <span className="text-2xl font-extrabold text-purple-600">{scenarios.milestones.startAge}</span>
-                                                </div>
-                                                <input 
-                                                    type="range" 
-                                                    min="18" 
-                                                    max={retirementAge - 1} 
-                                                    value={scenarios.milestones.startAge} 
-                                                    onChange={e => handleAgeChange('milestones', e.target.value)} 
-                                                    className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600" 
-                                                />
-                                            </div>
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-lg font-bold text-slate-700 mt-1.5">{targetMode ? 'Req. Monthly' : 'Initial Monthly'}</span>
-                                                <div className="flex flex-col items-end">
+                                            {renderSlider('milestones', 'text-purple-600', 'accent-purple-600')}
+
+                                            <div className="flex justify-between items-center gap-1">
+                                                <span className="text-sm xl:text-base font-bold text-slate-700 leading-tight">{targetMode ? 'Required Monthly' : 'Initial Monthly'}</span>
+                                                <div className="flex flex-col items-end shrink-0">
                                                     <div 
                                                         className={`flex items-center border-2 rounded-xl px-2 py-1.5 ${targetMode ? 'bg-slate-200 border-purple-300' : 'bg-slate-50 border-slate-300 focus-within:border-purple-500 transition-colors'}`}
                                                         title={targetMode ? `Exact amount required: $${requiredMonthly.milestones}` : ''}
                                                     >
                                                         <span className="text-slate-500 font-bold text-xl mr-1">$</span>
                                                         <input 
-                                                            type="number" 
-                                                            value={targetMode ? requiredMonthly.milestones.toFixed(0) : scenarios.milestones.initialMonthly} 
-                                                            onChange={e => updateScenario('milestones', 'initialMonthly', e.target.value)} 
+                                                            type="text" 
+                                                            value={targetMode ? Math.round(requiredMonthly.milestones).toLocaleString('en-US') : (scenarios.milestones.initialMonthly ? scenarios.milestones.initialMonthly.toLocaleString('en-US') : '')} 
+                                                            onChange={e => updateScenario('milestones', 'initialMonthly', e.target.value.replace(/[^0-9]/g, ''))} 
                                                             disabled={targetMode} 
-                                                            className={`w-20 text-right outline-none bg-transparent font-bold text-xl ${targetMode ? 'text-purple-800 cursor-not-allowed' : 'text-slate-800'}`} 
+                                                            className={`w-20 md:w-24 text-right outline-none bg-transparent font-bold text-lg xl:text-xl ${targetMode ? 'text-purple-800 cursor-not-allowed' : 'text-slate-800'}`} 
                                                         />
                                                     </div>
                                                     {targetMode && showSaver && (
